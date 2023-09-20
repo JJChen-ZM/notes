@@ -1,4 +1,4 @@
-<h3> adb shell am </h3>
+### adb shell am 
 The `adb shell am` command is a command-line utility provided by the Android Debug Bridge (ADB) tool. It's used to interact with the Android Activity Manager, which is responsible for managing activities (UI components) within an Android application.
 
 Here are some common usages of the `adb shell am` command:
@@ -38,7 +38,7 @@ Here are some common usages of the `adb shell am` command:
 
 These are just a few examples of how you can use the `adb shell am` command to interact with Android's Activity Manager. The `am` command provides a wide range of functionality for controlling and managing activities, services, and other components of Android applications.
 
-<h3> adb: unable to connect for root: cannot connect to daemo </h3>
+### adb: unable to connect for root: cannot connect to daemo 
 The error message "adb: unable to connect for root: cannot connect to daemon" indicates that there is an issue with the Android Debug Bridge (ADB) tool's connection to the ADB server, which is responsible for managing communication between your computer and Android devices.
 
 Here are some steps you can take to troubleshoot and resolve this issue:
@@ -64,7 +64,7 @@ Here are some steps you can take to troubleshoot and resolve this issue:
 
 If none of these steps resolve the issue, you might need to investigate further based on your specific environment and setup. Sometimes, restarting your computer can also help to clear any temporary issues.
 
-<h3> adb shell cp </h3>
+### adb shell cp 
 The `adb shell cp` command allows you to copy files from one location to another within the Android device's shell. This is similar to the `cp` command used in Unix-like systems.
 
 The basic syntax of the `adb shell cp` command is as follows:
@@ -86,7 +86,7 @@ In this example, the `myfile.txt` located in the `/sdcard` directory is copied t
 
 Remember that the paths should be specified relative to the Android device's file system, and you might need appropriate permissions to perform the copy operation. Also, ensure that the `adb` tool is available in your system's PATH, and that your device is connected and recognized by ADB.
 
-<h3> adb meminfo private, other</h3>
+### adb meminfo private, other
 "meminfo" 是一个与内存信息相关的命令或概念，通常用于监测和分析系统内存使用情况。在 Android 系统中，"meminfo" 命令用于显示应用程序和系统各个部分的内存使用情况。
 
 在 `meminfo` 输出中，"private" 和 "other" 是两个字段，用于表示不同类型的内存使用情况：
@@ -109,7 +109,7 @@ adb shell dumpsys meminfo <package_name>
 
 其中 `<package_name>` 是你想要获取内存信息的应用程序的包名。
 
-<h3> 脱敏算法 </h3>
+### 脱敏算法 
 脱敏算法是一种用于处理敏感数据以保护用户隐私的方法。在许多应用中，需要处理用户的敏感信息（如身份证号、电话号码、银行卡号等），但同时也需要保护这些信息不被滥用。脱敏算法可以在保持数据的可用性的同时，减少其敏感性。
 
 以下是一些常见的脱敏算法：
@@ -137,7 +137,7 @@ adb shell dumpsys meminfo <package_name>
 
 脱敏算法的选择取决于具体的应用需求、安全性要求以及法律法规等。无论选择哪种算法，保持数据的机密性和安全性始终是首要任务。
 
-<h3> 埋点 </h3>
+### 埋点 
 "埋点" 是移动应用开发中的一个术语，指的是在应用程序中插入代码以跟踪用户行为和事件。通过埋点，开发者可以收集关于用户在应用中的活动和行为的数据，这些数据对于了解用户行为模式、改进应用体验和分析应用性能非常有价值。
 
 埋点通常用于以下几个目的：
@@ -156,7 +156,7 @@ adb shell dumpsys meminfo <package_name>
 
 总之，埋点是移动应用开发中的一个重要实践，可以为开发者提供有价值的数据来优化应用，提升用户体验。
 
-<h3> project 级别 build.gradle 和 module 级别 build.gradle </h3>
+### project 级别 build.gradle 和 module 级别 build.gradle 
 在 Android 项目中，有两个级别的 Gradle 构建配置文件：项目级别的 `build.gradle` 和模块级别的 `build.gradle`。这两个文件分别用于不同的配置范围和目的。
 
 1. **项目级别的 build.gradle**：
@@ -227,7 +227,7 @@ dependencies {
 
 在实际开发中，你可以根据项目的需要，在项目级别和模块级别的 `build.gradle` 文件中配置相应的设置和依赖项。
 
-<h3> build.gradle 的 implementation </h3>
+### build.gradle 的 implementation 
 在 Android 项目中，`build.gradle` 文件中的 `implementation` 是一个依赖配置，用于指定项目所依赖的库和模块。它决定了在构建项目时会将哪些库包含到最终的 APK 文件中。
 
 在模块级别的 `build.gradle` 文件中，你可以使用 `implementation` 关键字来声明项目的依赖。下面是一个示例：
@@ -248,7 +248,7 @@ dependencies {
 
 需要注意的是，`implementation` 配置还有其他类似的变体，如 `api` 和 `compileOnly`。它们在依赖传递和构建时的行为上有一些区别。从 Android Gradle 插件 3.0 开始，推荐使用 `implementation` 来声明大多数依赖项。
 
-<h3> public static final String  </h3>
+### public static final String  
 
 你提供的代码片段不完整，但是我理解你可能是想了解一个常量字段的声明方式。在 Java 中，声明常量通常使用 `public static final` 关键字组合。这个组合关键字用于声明一个不可修改的、公共的、静态的常量。常量的命名通常使用大写字母和下划线，例如：
 
@@ -267,7 +267,7 @@ public static final String APP_NAME = "MyApp";
 
 使用常量可以提高代码的可读性和维护性，因为它们的值在整个程序中是固定的，不会被改变。
 
-<h3> java 的多态 </h3>
+### java 的多态 
 
 Java 的多态性是面向对象编程的一个重要特性，它允许不同类的对象通过共同的父类引用来进行操作。多态性提供了更灵活的代码组织和实现，以及更强大的代码复用性。
 
@@ -318,7 +318,7 @@ public class Main {
 多态性可以使代码更加灵活，允许你在不改变代码结构的情况下，扩展和修改程序的行为。
 
 
-<h3> Intent intent = getIntent(); </h3>
+### Intent intent = getIntent(); 
 
 在 Android 开发中，`getIntent()` 方法用于获取启动当前活动（Activity）的意图（Intent）。每个活动都可以通过这个方法获取启动它的意图，从而获得传递给它的数据或参数。
 
@@ -354,7 +354,7 @@ public class SecondActivity extends AppCompatActivity {
 
 这种方式允许你在不同的活动之间传递数据，以实现不同活动之间的交互和通信。
 
-<h3> android context 参数 </h3>
+### android context 参数 
 
 在 Android 开发中，`Context` 是一个非常重要的类，它提供了访问应用程序的全局环境信息的能力。每个 Android 应用程序都有一个全局的 `Context`，它可以用来访问应用程序的资源、启动活动、创建视图和执行其他与应用程序环境相关的操作。
 
@@ -377,7 +377,7 @@ public class SecondActivity extends AppCompatActivity {
 
 在 Android 开发中，`Context` 是一个常见的参数，许多方法需要传递一个 `Context` 实例以便在应用程序中执行相关操作。但是要注意，在某些情况下，滥用 `Context` 可能会导致内存泄漏，因此在使用时应该注意适当的上下文的生命周期管理。
 
-<h3> adb 查看 app 的版本 </h3>
+### adb 查看 app 的版本 
 
 要查看安装在 Android 设备或模拟器上的应用程序的版本，您可以使用以下命令：
 
@@ -401,7 +401,7 @@ versionName=1.2.3
 
 这将显示应用程序的版本号为 "1.2.3"。请注意，您需要在设备上安装了该应用程序才能使用这个命令。
 
-<h3> apply plugin: </h3>
+### apply plugin: 
 
 `apply plugin` 是一个在 Gradle 构建脚本中常用的命令，用于引入 Gradle 插件并将其应用于项目。Gradle 插件通常用于添加额外的功能、任务或构建配置到您的项目中。以下是一些常见用法示例：
 
@@ -450,7 +450,7 @@ versionName=1.2.3
 
 `apply plugin` 命令是 Gradle 构建脚本的一部分，它允许您将不同的功能模块引入到项目中，以满足项目的需求。要了解有关每个插件的详细信息以及如何配置它们，请参阅插件的文档或项目的文档。
 
-<h3> adb uninstall .apk </h3>
+### adb uninstall .apk 
 
 要使用 ADB（Android 调试桥）卸载一个安装在模拟器或连接的 Android 设备上的 APK 文件，您可以使用以下命令：
 
@@ -468,7 +468,7 @@ adb uninstall com.example.myapp
 
 请确保您已经连接到了目标模拟器或 Android 设备，并且已启动 ADB 服务，以便成功执行卸载操作。
 
-<h3> git bash 如何使用 adb 拷贝设备的文件 </h3>
+### git bash 如何使用 adb 拷贝设备的文件 
 
 在 Git Bash 中，您可以使用 `adb` 命令来与连接到计算机的 Android 设备进行交互，包括拷贝文件。以下是一些示例命令，演示如何使用 `adb` 在 Git Bash 中拷贝设备的文件：
 
@@ -500,9 +500,9 @@ adb uninstall com.example.myapp
 
 请注意，以上命令中的路径分隔符取决于您的操作系统。在 Windows 中，通常使用反斜杠 `\`，而在类 Unix 操作系统（包括 Git Bash）中，使用正斜杠 `/`。确保根据您的操作系统正确使用路径分隔符。
 
-<h3> apply plugin: 'com.android.application' 和 plugins {
+### apply plugin: 'com.android.application' 和 plugins {
     id 'com.android.application'
-}的区别 </h3>
+}的区别 
 
 `apply plugin: 'com.android.application'` 和 `plugins { id 'com.android.application' }` 是两种不同的方式来在 Gradle 中引入 Android Gradle 插件（AGP）的方式。它们有一些区别，但实际功能相同。
 
@@ -520,9 +520,9 @@ adb uninstall com.example.myapp
 
 总的来说，功能上两者是等效的，都是为了将 Android Gradle 插件应用到您的 Android 项目中。但出于可读性和推荐性的考虑，较新的方式更受欢迎，特别是对于新项目和较新版本的 Gradle 和 AGP。如果您在现有项目中看到了 `apply plugin: 'com.android.application'`，也没有问题，它仍然有效。
 
-<h3> Unsupported Java. 
+### Unsupported Java. 
 
-Your build is currently configured to use Java 17.0.6 and Gradle 7.0.2. </h3>
+Your build is currently configured to use Java 17.0.6 and Gradle 7.0.2. 
 
 这个错误信息表明您的项目正在使用不受支持的 Java 版本（Java 17.0.6）与 Gradle 版本（7.0.2）。您需要根据您的项目和构建需要进行一些配置更改：
 
@@ -549,7 +549,7 @@ Your build is currently configured to use Java 17.0.6 and Gradle 7.0.2. </h3>
 
 请根据您的项目需求和要求来调整 Gradle 和 Java 版本。确保它们之间兼容，并且与您的项目所需的 Android Gradle 插件版本兼容。
 
-<h3> distributionUrl=https\://services.gradle.org/distributions/gradle-7.0.2-all.zip </h3>
+### distributionUrl=https\://services.gradle.org/distributions/gradle-7.0.2-all.zip 
 
 如果您想使用 Gradle 7.0.2 并配置了 `distributionUrl` 为以下值：
 
@@ -581,7 +581,7 @@ distributionUrl=https\://services.gradle.org/distributions/gradle-7.0.2-all.zip
 
 这些步骤应该使您的项目能够使用 Gradle 7.0.2 和 Java 17 进行构建。如果您的项目需要其他特定的配置，请根据项目的需求进行调整。
 
-<h3> build.gradle 的作用 </h3>
+### build.gradle 的作用 
 
 `build.gradle` 是 Android 项目中的 Gradle 构建文件，用于配置项目的构建设置和依赖项。它的作用非常重要，主要包括以下几个方面：
 
@@ -601,7 +601,7 @@ distributionUrl=https\://services.gradle.org/distributions/gradle-7.0.2-all.zip
 
 总之，`build.gradle` 文件是 Android 项目构建的核心配置文件，它定义了项目的结构、构建流程和依赖关系，允许开发者灵活地管理和定制项目的构建过程。
 
-<h3> onCreate() </h3>
+### onCreate() 
 
 `onCreate()` 是 Android 应用中的一个生命周期方法。它是 `Activity` 类中的一个重要方法，在活动（Activity）创建时被调用，用于执行一些初始化操作和设置用户界面。
 
@@ -645,7 +645,7 @@ protected void onCreate(Bundle savedInstanceState) {
 请注意，`onCreate()` 是 Android 生命周期中的一个方法，它在活动创建时被调用一次。其他生命周期方法，如 `onStart()`、`onResume()`、`onPause()`、`onStop()` 和 `onDestroy()`，在应用的不同阶段会被调用，以便管理活动的生命周期。
 
 
-<h3>  onClick(View view) </h3>
+###  onClick(View view) 
 
 `onClick(View view)` 是 Android 开发中用于处理点击事件的方法。这个方法通常用于实现 `View.OnClickListener` 接口，以响应用户点击界面上的按钮或其他可点击的视图元素。
 
@@ -689,7 +689,7 @@ public class MainActivity extends AppCompatActivity {
 在这个示例中，`onClick(View view)` 方法被设置为按钮的点击事件监听器。当用户点击按钮时，`onClick()` 方法会被调用，并且传入的 `view` 参数将指示点击的是哪个视图元素（在这种情况下是按钮）。您可以使用 `view` 参数来识别点击的视图元素，并执行相应的操作。
 
 
-<h3> android studio 如何在java文件引用 res 目录的 .xml文件 </h3>
+### android studio 如何在java文件引用 res 目录的 .xml文件 
 
 在 Android Studio 中，要在 Java 文件中引用 res 目录下的 XML 文件，您可以使用资源引用的方式。以下是一些示例，说明如何引用不同类型的 XML 文件：
 
@@ -722,7 +722,7 @@ public class MainActivity extends AppCompatActivity {
 确保您的 XML 文件位于正确的 res 目录下，以便能够使用资源引用来访问它们。此外，请确保您的 Java 文件位于与资源目录（例如 `res`）相同的 Android 包中，以便能够正常访问资源。如果资源引用未生效，请尝试同步项目或重新构建项目以解决问题。
 
 
-<h3> AndroidManifest.xml Service </h3>
+### AndroidManifest.xml Service 
 
 AndroidManifest.xml 文件是 Android 应用程序的配置文件之一，用于描述应用程序的各种属性和组件，包括服务（Service）组件。在 AndroidManifest.xml 文件中，您可以声明和配置服务，以便应用程序能够使用它们。
 
@@ -766,7 +766,7 @@ AndroidManifest.xml 文件是 Android 应用程序的配置文件之一，用于
 一旦您在 AndroidManifest.xml 文件中声明了服务，您就可以在应用程序的 Java 代码中启动、停止或与服务进行交互，以执行各种后台任务。要了解有关 Android 服务的更多信息，可以查阅 Android 官方文档。
 
 
-<h3> adb server killed by remote request </h3>
+### adb server killed by remote request 
 
 "adb server killed by remote request" 这个错误消息通常表示 Android 调试桥（ADB）服务器在运行过程中由于某种原因被远程请求或操作中止。这可能会导致与设备的连接中断或无法继续进行调试和开发操作。
 
@@ -796,7 +796,7 @@ AndroidManifest.xml 文件是 Android 应用程序的配置文件之一，用于
 如果尝试了以上方法仍然无法解决问题，您可能需要进一步调查问题的根本原因，例如查看错误日志以获取更多信息。如果您在使用特定的开发工具（如 Android Studio）时遇到此问题，还可以查看该工具的错误日志以获取更多信息和线索。
 
 
-<h3> how to know which activity will run in android studio avd? </h3>
+### how to know which activity will run in android studio avd? 
 To know which activity will run when you launch your Android Studio project on an Android Virtual Device (AVD), you need to look into your app's manifest file and identify the main activity. The main activity is the entry point of your app and the one that will be launched when the app starts.
 
 Here's how you can find and identify the main activity in your Android Studio project:
@@ -824,7 +824,7 @@ Here's how you can find and identify the main activity in your Android Studio pr
 
 Once you've identified the main activity in your `AndroidManifest.xml` file, you'll know which activity will run when you launch your app on an AVD. This is the activity that will be displayed first when your app starts.
 
-<h3> adb run app </h3>
+### adb run app 
 To run an app on an Android device or emulator using the Android Debug Bridge (ADB), you typically need to do the following steps:
 
 1. **Install the App (if not already installed)**:
@@ -858,4 +858,4 @@ Remember to replace `com.example.myapp` and `MainActivity` with the actual value
 
 Please note that this assumes you have set up your Android development environment correctly, including having the necessary Android SDK tools, ADB, and an Android device or emulator available for testing.
 
-<h3> </h3>
+### 

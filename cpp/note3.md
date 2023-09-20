@@ -1,13 +1,4 @@
-<h3>  </h3>
-<h3>  </h3>
-<h3>  </h3>
-<h3>  </h3>
-<h3>  </h3>
-<h3>  </h3>
-<h3>  </h3>
-<h3>  </h3>
-<h3>  </h3>
-<h3> run_thread_ = std::thread([this]() { Run(); }); </h3>
+### run_thread_ = std::thread([this]() { Run(); }); 
 The code you provided is a C++ lambda expression used to create and start a new thread. Let's break down the statement:
 
 ```cpp
@@ -62,7 +53,7 @@ int main() {
 
 In this example, when you call `StartThread()` on an instance of `MyClass`, it will create a new thread that runs the `Run()` member function of the object. The `join()` function is used in `main()` to wait for the thread to finish its execution before the program exits.
 
-<h3> const and constexpr </h3>
+### const and constexpr 
 `const` and `constexpr` are both keywords in C++ that are used to define constants, but they have different meanings and usage.
 
 1. `const`:
@@ -91,7 +82,7 @@ In this example, when you call `StartThread()` on an instance of `MyClass`, it w
 
 In summary, `const` is used to define runtime constants that cannot be modified after initialization, while `constexpr` is used to define compile-time constants that are evaluated at compile-time and can be used in contexts where constant expressions are required.
 
-<h3>  memset(&m_imgs, 0, sizeof(m_imgs));   </h3>
+###  memset(&m_imgs, 0, sizeof(m_imgs));   
 The code you provided is using the `memset` function to set a block of memory to a specific value, often used to initialize arrays or structs with zeros. Let's break down the code:
 
 ```cpp
@@ -110,7 +101,7 @@ So, the `memset` function is being used here to set the memory represented by th
 
 However, it's important to note that using `memset` to set memory containing non-trivial types (like C++ classes with constructors, destructors, etc.) may not result in expected behavior. In C++, it's generally recommended to use constructors to initialize objects properly. If `m_imgs` is an array of objects or a struct containing objects, you might consider using appropriate constructors or initialization methods provided by those objects instead.
 
-<h3> user define type prefix and suffix ++ operation </h3>
+### user define type prefix and suffix ++ operation 
 To define your own user-defined type with custom prefix and suffix increment operations, you need to overload the `++` operator for your class. In C++, this can be achieved by creating member functions for both the prefix and suffix versions of the `++` operator.
 
 Here's how you can define a custom user-defined type with prefix and suffix increment operations:
@@ -163,7 +154,7 @@ In this example, the `MyNumber` class defines both the prefix and suffix increme
 
 Remember that when overloading operators, it's important to maintain the expected behavior and adhere to the conventions of the language. The prefix increment operator should return a reference to the modified object, while the suffix increment operator should return a copy of the original object before modification.
 
-<h3> virtual override </h3>
+### virtual override 
 In C++, `virtual` and `override` are keywords used in the context of class inheritance and polymorphism to control the behavior of functions in derived classes. Let's take a closer look at what each keyword does:
 
 1. **`virtual` Keyword**:
@@ -198,7 +189,7 @@ In C++, `virtual` and `override` are keywords used in the context of class inher
 
 In summary, the combination of `virtual` and `override` keywords in C++ is crucial for achieving polymorphism and ensuring that the correct overridden function is called based on the object's actual type. The `virtual` keyword in the base class indicates that a function can be overridden, and the `override` keyword in the derived class explicitly states the intention to override the base class function, helping prevent errors.
 
-<h3> __android_log_print </h3>
+### __android_log_print 
 `__android_log_print` is a logging function provided by the Android NDK (Native Development Kit) for writing log messages from native code (C or C++) to the Android logcat. The logcat is a system-wide logging mechanism in Android that allows developers to monitor and debug their applications.
 
 The function signature of `__android_log_print` is as follows:
@@ -230,7 +221,7 @@ In this example, the `logMessage` function uses `__android_log_print` to print a
 
 The log messages generated using `__android_log_print` can be viewed in the Android logcat using commands like `adb logcat` or through IDEs like Android Studio. This helps in debugging and monitoring native code running on an Android device or emulator.
 
-<h3> time() localtime() </h3>
+### time() localtime() 
 `time()` and `localtime()` are C and C++ functions commonly used for working with date and time in programming.
 
 1. **`time()` Function**:

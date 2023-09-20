@@ -1,8 +1,23 @@
-<h3>  </h3>
-<h3>  </h3>
-<h3> memset(&m_imgs, 0, sizeof(m_imgs)); </h3>
+### memset(&m_imgs, 0, sizeof(m_imgs)); 
+The code you provided is using the `memset` function to set a block of memory to a specific value, often used to initialize arrays or structs with zeros. Let's break down the code:
 
-<h3> state machine </h3>
+```cpp
+memset(&m_imgs, 0, sizeof(m_imgs));
+```
+
+1. `memset`: This is a C standard library function that stands for "memory set." It is commonly used to set a block of memory to a specific value.
+
+2. `&m_imgs`: This is the address of the memory block you want to set. `m_imgs` is likely a variable or struct that represents an array or a collection of elements.
+
+3. `0`: This is the value that you want to set the memory to. In this case, `0` represents the value of null or zero.
+
+4. `sizeof(m_imgs)`: This is the size of the memory block in bytes that you want to set. It calculates the size of the `m_imgs` variable or struct.
+
+So, the `memset` function is being used here to set the memory represented by the variable `m_imgs` to all zeros, effectively initializing it. This is often used to ensure that arrays or structs are initialized to a known state before being used.
+
+However, it's important to note that using `memset` to set memory containing non-trivial types (like C++ classes with constructors, destructors, etc.) may not result in expected behavior. In C++, it's generally recommended to use constructors to initialize objects properly. If `m_imgs` is an array of objects or a struct containing objects, you might consider using appropriate constructors or initialization methods provided by those objects instead.
+
+### state machine 
 A state machine, also known as a finite-state machine (FSM), is a computational model used to describe the behavior of a system that can exist in a finite number of states. It's a concept used in computer science, engineering, and various other fields to model and control processes that have distinct, well-defined states and transitions between those states.
 
 In a state machine, the system can be in one state at a time, and transitions between states occur based on events or conditions. The behavior of the system is defined by specifying the possible states, the events or inputs that trigger transitions, and the actions or behaviors associated with those transitions.
@@ -31,7 +46,7 @@ Implementing a state machine involves defining the states, events, transitions, 
 
 Overall, state machines provide a structured and organized way to model and manage complex systems with well-defined behaviors and transitions.
 
-<h3> 工厂模式 </h3>
+### 工厂模式 
 工厂模式是一种创建型设计模式，它提供了一种创建对象的接口，但允许子类决定要实例化的类。工厂模式可以将对象的创建与使用代码解耦，从而提高代码的可维护性和灵活性。
 
 工厂模式通常包含以下几个关键组成部分：
@@ -65,7 +80,7 @@ Overall, state machines provide a structured and organized way to model and mana
 
 总之，工厂模式是一种常用的设计模式，适用于需要动态创建对象的场景，帮助组织和管理对象的创建过程。
 
-<h3> 工厂模式示例代码 </h3>
+### 工厂模式示例代码 
 以下是一个简单工厂模式的示例代码，展示了如何使用工厂模式创建不同类型的汽车对象：
 
 ```c++
@@ -131,7 +146,7 @@ int main() {
 
 通过创建不同的工厂对象，我们可以创建不同类型的汽车，从而将对象的创建与使用解耦。这样，如果要添加新的汽车类型，只需创建新的具体产品和对应的具体工厂，而不需要修改现有的代码。
 
-<h3> C++ 发布订阅模式 </h3>
+### C++ 发布订阅模式 
 
 在C++中，你可以实现发布-订阅模式以实现组件之间的松散耦合通信。这里是一个使用C++的发布-订阅模式的简单示例：
 
@@ -223,7 +238,7 @@ int main() {
 这个示例演示了如何创建发布者和订阅者对象，并让它们相互通信。这种模式允许你实现松散耦合的组件通信，以便更容易扩展和维护你的C++应用程序。
 
 
-<h3> extern int fun(int data); </h3>
+### extern int fun(int data); 
 
 这段C++代码定义了一个函数 `fun`，该函数接受一个整数参数 `data` 并返回一个 `int` 类型的值。函数声明中的 `extern` 关键字通常用于告诉编译器，这个函数的定义可能在其他源文件中，而不是当前源文件中。这种声明方式允许你在一个源文件中声明函数，然后在另一个源文件中实际实现它，从而实现模块化的代码组织。
 
@@ -252,7 +267,7 @@ int main() {
 这个示例中，`fun` 函数接受参数 `data`，执行某些操作，然后返回一个结果。这个结果可以在程序中的其他地方使用。
 
 
-<h3> C++ Handle </h3>
+### C++ Handle 
 
 C++ 中的 "Handle" 通常指的是一个用于标识或管理资源的抽象类型或指针。Handles 通常用于管理底层资源，如内存、文件、图形对象等，以确保资源的安全使用和释放。Handle 的使用可以提高程序的可维护性和安全性。
 
@@ -270,3 +285,66 @@ C++ 中的 "Handle" 通常指的是一个用于标识或管理资源的抽象类
 
 Handle 的主要目标是隐藏底层资源的复杂性，提供一种抽象层，使程序员能够更轻松地操作资源而不必担心底层管理。这有助于减少错误，并提高代码的可读性和维护性。在 C++ 中，使用 RAII（Resource Acquisition Is Initialization）技术通常与 Handle 结合使用，以确保资源在对象生命周期结束时自动释放。
 
+### C++两个类相互实例化
+在 C++ 中，两个类之间相互实例化是可能的，但需要注意避免循环依赖的问题。循环依赖发生在两个或多个类相互包含对方的头文件，导致编译器无法解决类的定义顺序。
+
+为了解决循环依赖问题，可以使用前向声明（forward declaration）来声明一个类的存在而不包含其完整定义。前向声明告诉编译器某个类的名称和类型是有效的，这样可以解决类之间的循环依赖问题。
+
+以下是一个简单示例，演示了两个类之间相互实例化的情况，并使用前向声明来解决循环依赖问题：
+
+```cpp
+// ClassB.h
+#ifndef CLASSB_H
+#define CLASSB_H
+
+// 前向声明 ClassA，告诉编译器 ClassA 的存在
+class ClassA;
+
+class ClassB {
+public:
+    ClassB() {}
+    void doSomethingWithClassA(ClassA& a);
+};
+
+#endif
+
+
+// ClassB.cpp
+#include "ClassB.h"
+#include "ClassA.h" // 包含完整的 ClassA 头文件
+
+void ClassB::doSomethingWithClassA(ClassA& a) {
+    // 使用 ClassA 的实例 a 进行操作
+    // ...
+}
+
+
+// ClassA.h
+#ifndef CLASSA_H
+#define CLASSA_H
+
+// 前向声明 ClassB，告诉编译器 ClassB 的存在
+class ClassB;
+
+class ClassA {
+public:
+    ClassA() {}
+    void doSomethingWithClassB(ClassB& b);
+};
+
+#endif
+
+
+// ClassA.cpp
+#include "ClassA.h"
+#include "ClassB.h" // 包含完整的 ClassB 头文件
+
+void ClassA::doSomethingWithClassB(ClassB& b) {
+    // 使用 ClassB 的实例 b 进行操作
+    // ...
+}
+```
+
+在上述示例中，`ClassA` 和 `ClassB` 之间相互实例化，但是在头文件中使用了前向声明来声明对方的存在，而不包含对方的完整定义。然后，在各自的实现文件（`.cpp` 文件）中，再包含对方的完整头文件，这样就可以在实现中使用对方的方法和属性。
+
+这种方法可以有效避免循环依赖问题，确保类之间的交叉引用能够正常工作。但在实际编程中，还是需要谨慎设计类之间的依赖关系，避免复杂的相互依赖关系，以保持代码的可维护性和可读性。

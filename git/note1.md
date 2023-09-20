@@ -1,8 +1,4 @@
-<h3>  </h3>
-<h3>  </h3>
-<h3>  </h3>
-<h3>  </h3>
-<h3> git pull 更新最新 </h3>
+### git pull 更新最新 
 To update your local Git repository with the latest changes from the remote repository, you can use the `git pull` command. Here's how you can do it:
 
 1. Open a terminal or command prompt.
@@ -23,7 +19,7 @@ After running `git pull`, your local repository will be updated with the latest 
 
 Remember that before performing a `git pull`, it's a good practice to ensure that you don't have any uncommitted changes in your local repository. You can use `git status` to check the status of your working directory before pulling changes.
 
-<h3> git apply -R </h3>
+### git apply -R 
 The `git apply -R` command is used to reverse (unapply) a previously applied patch in a Git repository. This can be useful if you've applied a patch using `git apply` and want to undo the changes introduced by that patch.
 
 Here's how to use `git apply -R`:
@@ -50,7 +46,7 @@ Keep in mind that reversing a patch might not always be successful if the reposi
 
 Additionally, it's important to use version control practices to manage code changes effectively. Creating and applying patches is just one aspect of version control, and Git offers various other tools and workflows for managing changes in your repository.
 
-<h3> git push 被拒绝后，如何重新 git commit </h3>
+### git push 被拒绝后，如何重新 git commit 
 
 如果在执行 `git push` 后被拒绝，通常是因为远程仓库中已经有了新的提交，而你的本地仓库落后于远程仓库。在这种情况下，你需要先将远程仓库的变更拉取到本地，然后解决冲突（如果有冲突），最后再次提交并推送。
 
@@ -66,7 +62,7 @@ Additionally, it's important to use version control practices to manage code cha
 
 需要注意的是，推送之前最好确保你的本地代码是最新的，并且没有未提交的变更。如果之前的 `git push` 操作被拒绝，不要担心，通过解决冲突并重新提交，你应该能够将你的变更成功推送到远程仓库。
 
-<h3> git 重新 commit  </h3>
+### git 重新 commit  
 
 如果你需要修改之前的提交消息或者变更，可以使用 `git commit --amend` 命令来重新提交。
 
