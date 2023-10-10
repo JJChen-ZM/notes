@@ -98,3 +98,50 @@ grep -rn "hello" .
 注意，`.` 表示当前目录，你可以将其替换为其他目录路径或特定文件名，以在不同的位置进行搜索。
 
 使用 `grep -rn` 可以帮助你快速找到包含特定文本的文件，并定位到匹配的行号，是一种非常有用的文本搜索工具。
+
+
+### linux md5sum遍历文件夹
+
+```
+find ./ -type f -print0 | xargs -0 md5sum >> test.md5
+```
+
+### linux md5sum对目录的文件进行md5
+
+```
+find . -type f -exec md5sum {} + | md5sum
+```
+
+参考： https://geek-docs.com/linux/linux-basic/t_calculate-an-md5-checksum-of-a-directory-in-linux.html
+
+
+### find命令排除某些目录或文件
+
+```
+# 在当前目录下排除abc目录，查找所有文件
+find . -path "./abc" -prune -o -print
+ 
+# 在当前目录下排除abc目录，查找所有以.txt结尾的文件【方式一】
+find . -path "./abc" -prune -o -name "*.txt" -print
+ 
+# 在当前目录下排除abc目录，查找所有以.txt结尾的文件【方式二】
+find . -name "*.txt" -not -path "./abc/*"
+ 
+# 在当前目录下排除abc和def目录，查找所有以.txt结尾的文件
+find . \( -path ./abc -o -path ./def \) -prune -o -name "*.txt" -print
+ 
+# 在当前目录下排除abc目录和def/h.txt文件，查找所有以.txt结尾的文件
+find . \( -path ./abc -o -path ./def/h.txt \) -prune -o -name "*.txt" -print
+ 
+# 在当前目录下排除abc目录和def/h.txt文件和jk目录，查找所有以.txt结尾的文件
+find . \( -path ./abc -o -path ./def/h.txt -o -path ./jk \) -prune -o -name "*.txt" -print
+ 
+# 在当前目录下查找所有不是以.html结尾的文件
+find . ! -name "*.html" -type f
+```
+参考：https://blog.csdn.net/chenzhengfeng/article/details/122753903
+
+### 去掉某个目录再列出所有文件的 md5sum 
+```
+find . -path "./.git" -prune -o  -type f -exec md5sum {} +
+```

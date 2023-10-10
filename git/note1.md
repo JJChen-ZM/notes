@@ -230,7 +230,7 @@ Additionally, it's important to use version control practices to manage code cha
    git fetch ssh://username@old-gerrit-server:29418/old-project.git refs/tags/<tag-name>:refs/tags/<tag-name>
    ```
 
-   请替换 `username` 为您的用户名，`old-gerrit-server` 为旧的 Gerrit 服务器地址，`old-project` 为旧项目的名称，以及 `<tag-name>` 为您要迁移的标签名称。
+   请替换 `username` 为您的用户名，`old-gerrit-server` 为旧的 Gerrit 服务器地址，`old-project` 为旧项目的名称，以及 `<tag-name>` 为您要   迁移的标签名称。
 
 4. **推送标签到新项目**：
 
@@ -344,3 +344,85 @@ git ls-remote --tags origin
 这将显示远程仓库中的标签列表。
 
 请注意，标签通常用于标记发布的版本，以便更容易地在不同的提交之间进行导航和跟踪。标签不像分支（branches）那样会自动移动，它们是静态的，通常不随新提交的创建而变化。
+
+
+### git push origin HEAD:refs/heads/master
+
+这个 `git push` 命令的作用是将当前分支（`HEAD`）的内容推送到远程仓库的 `master` 分支。具体地说，它将本地当前分支的内容（`HEAD` 所指向的分支）推送到远程仓库的 `master` 分支上。
+
+让我们对这个命令的各部分进行解释：
+
+- `git push origin`：这是推送操作的一部分，其中 `origin` 是远程仓库的名称。通常，`origin` 是默认的远程仓库名称，但您也可以替换它为您的远程仓库的名称。
+
+- `HEAD`：这是一个特殊的Git引用，它指向当前所在的分支或提交。在这种情况下，`HEAD` 指向的是您当前所在的分支。
+
+- `:`：这是推送操作的分隔符，它将本地分支和远程分支分开。
+
+- `refs/heads/master`：这是远程分支的引用，`master` 是远程仓库中的分支名称。
+
+因此，上述命令将当前分支的内容推送到远程仓库中的 `master` 分支。这对于更新远程 `master` 分支以匹配本地分支非常有用。请确保您在执行此操作之前已经在本地分支上进行了所需的更改和提交。
+
+在这个过程中，如果远程 `master` 分支已经存在，您的更改将被合并到该分支中。如果远程 `master` 分支不存在，它将被创建，并将包含您当前分支的内容。在这两种情况下，确保您具有推送权限以执行此操作。
+
+### 上述操作结果是：! [rejected]        HEAD -> master (non-fast-forward)
+这个错误消息 `! [rejected] HEAD -> master (non-fast-forward)` 意味着在尝试将本地分支（HEAD）推送到远程 `master` 分支时，发生了拒绝，因为它不是一个“fast-forward” 操作。
+
+Fast-forward 合并是指将一个分支的更改合并到另一个分支，而没有需要合并的冲突。在Git中，分支合并通常是Fast-forward合并，这是因为Git可以轻松地将更改应用到目标分支。
+
+这个错误通常出现在以下情况下：
+
+1. 远程 `master` 分支已经包含了其他提交，而您尝试将一个不包括这些提交的本地分支推送到远程 `master`。
+
+2. 多个开发者同时尝试推送到同一个远程分支，其中一个人已经推送了更改，导致冲突。
+
+解决这个问题的方法通常是执行一个合并或者将本地分支的更改重新基于远程 `master` 分支。以下是一些可能的解决方法：
+
+1. **合并远程更改**：首先，确保您已经获取了远程 `master` 分支的最新更改，然后在本地分支上执行合并操作：
+
+   ```bash
+   git fetch origin master
+   git merge origin/master
+   ```
+
+   这将合并远程 `master` 分支的更改到本地分支。
+
+2. **重新基于远程分支**：如果您想保持线性历史并且没有合并冲突，可以使用 `rebase` 操作：
+
+   ```bash
+   git fetch origin master
+   git rebase origin/master
+   ```
+
+   这将重新基于远程 `master` 分支，将您的更改应用在其之上。
+
+3. **强制推送**（谨慎使用）：如果您确切知道自己的更改应该覆盖远程 `master` 分支，可以使用 `--force` 选项来执行强制推送，但这将覆盖远程分支并可能导致数据丢失：
+
+   ```bash
+   git push origin HEAD:master --force
+   ```
+
+   注意，谨慎使用强制推送，因为它会覆盖远程分支，潜在地导致数据丢失。
+
+在任何情况下，请确保您了解更改如何影响您的项目和团队，并与团队成员协调推送操作，以避免数据丢失和合并冲突。
+
+### fatal: the remote end hung up unexpectedly
+参考：https://blog.csdn.net/weixin_38450840/article/details/80701173
+
+在使用git更新或提交项目时候出现 "fatal: The remote end hung up unexpectedly " 原因是推送的文件太大。
+
+方法一：
+
+修改提交缓存大小为500M，或者更大的数字
+
+git config --global http.postBuffer 524288000
+
+// some comments below report having to double the value:
+
+git config --global http.postBuffer 1048576000
+
+或者在克隆/创建版本库生成的 .git目录下面修改生成的config文件增加如下：
+
+```
+[http]  
+postBuffer = 524288000
+```
