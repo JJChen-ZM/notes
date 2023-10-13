@@ -1,4 +1,5 @@
-### memset(&m_imgs, 0, sizeof(m_imgs)); 
+### memset(&m_imgs, 0, sizeof(m_imgs));
+
 The code you provided is using the `memset` function to set a block of memory to a specific value, often used to initialize arrays or structs with zeros. Let's break down the code:
 
 ```cpp
@@ -17,7 +18,8 @@ So, the `memset` function is being used here to set the memory represented by th
 
 However, it's important to note that using `memset` to set memory containing non-trivial types (like C++ classes with constructors, destructors, etc.) may not result in expected behavior. In C++, it's generally recommended to use constructors to initialize objects properly. If `m_imgs` is an array of objects or a struct containing objects, you might consider using appropriate constructors or initialization methods provided by those objects instead.
 
-### state machine 
+### state machine
+
 A state machine, also known as a finite-state machine (FSM), is a computational model used to describe the behavior of a system that can exist in a finite number of states. It's a concept used in computer science, engineering, and various other fields to model and control processes that have distinct, well-defined states and transitions between those states.
 
 In a state machine, the system can be in one state at a time, and transitions between states occur based on events or conditions. The behavior of the system is defined by specifying the possible states, the events or inputs that trigger transitions, and the actions or behaviors associated with those transitions.
@@ -46,7 +48,8 @@ Implementing a state machine involves defining the states, events, transitions, 
 
 Overall, state machines provide a structured and organized way to model and manage complex systems with well-defined behaviors and transitions.
 
-### 工厂模式 
+### 工厂模式
+
 工厂模式是一种创建型设计模式，它提供了一种创建对象的接口，但允许子类决定要实例化的类。工厂模式可以将对象的创建与使用代码解耦，从而提高代码的可维护性和灵活性。
 
 工厂模式通常包含以下几个关键组成部分：
@@ -72,6 +75,7 @@ Overall, state machines provide a structured and organized way to model and mana
    在工厂方法模式中，每个具体产品都有一个对应的工厂类，而客户端通过调用具体工厂类来创建所需的产品。
 
 工厂模式的优点包括：
+
 - 将对象的创建与使用分离，降低了耦合性。
 - 可以轻松扩展新的产品类，而不需要修改现有的代码。
 - 符合单一职责原则，每个具体工厂只负责创建一种产品。
@@ -80,7 +84,8 @@ Overall, state machines provide a structured and organized way to model and mana
 
 总之，工厂模式是一种常用的设计模式，适用于需要动态创建对象的场景，帮助组织和管理对象的创建过程。
 
-### 工厂模式示例代码 
+### 工厂模式示例代码
+
 以下是一个简单工厂模式的示例代码，展示了如何使用工厂模式创建不同类型的汽车对象：
 
 ```c++
@@ -146,7 +151,7 @@ int main() {
 
 通过创建不同的工厂对象，我们可以创建不同类型的汽车，从而将对象的创建与使用解耦。这样，如果要添加新的汽车类型，只需创建新的具体产品和对应的具体工厂，而不需要修改现有的代码。
 
-### C++ 发布订阅模式 
+### C++ 发布订阅模式
 
 在C++中，你可以实现发布-订阅模式以实现组件之间的松散耦合通信。这里是一个使用C++的发布-订阅模式的简单示例：
 
@@ -237,8 +242,7 @@ int main() {
 
 这个示例演示了如何创建发布者和订阅者对象，并让它们相互通信。这种模式允许你实现松散耦合的组件通信，以便更容易扩展和维护你的C++应用程序。
 
-
-### extern int fun(int data); 
+### extern int fun(int data);
 
 这段C++代码定义了一个函数 `fun`，该函数接受一个整数参数 `data` 并返回一个 `int` 类型的值。函数声明中的 `extern` 关键字通常用于告诉编译器，这个函数的定义可能在其他源文件中，而不是当前源文件中。这种声明方式允许你在一个源文件中声明函数，然后在另一个源文件中实际实现它，从而实现模块化的代码组织。
 
@@ -266,8 +270,7 @@ int main() {
 
 这个示例中，`fun` 函数接受参数 `data`，执行某些操作，然后返回一个结果。这个结果可以在程序中的其他地方使用。
 
-
-### C++ Handle 
+### C++ Handle
 
 C++ 中的 "Handle" 通常指的是一个用于标识或管理资源的抽象类型或指针。Handles 通常用于管理底层资源，如内存、文件、图形对象等，以确保资源的安全使用和释放。Handle 的使用可以提高程序的可维护性和安全性。
 
@@ -286,6 +289,7 @@ C++ 中的 "Handle" 通常指的是一个用于标识或管理资源的抽象类
 Handle 的主要目标是隐藏底层资源的复杂性，提供一种抽象层，使程序员能够更轻松地操作资源而不必担心底层管理。这有助于减少错误，并提高代码的可读性和维护性。在 C++ 中，使用 RAII（Resource Acquisition Is Initialization）技术通常与 Handle 结合使用，以确保资源在对象生命周期结束时自动释放。
 
 ### C++两个类相互实例化
+
 在 C++ 中，两个类之间相互实例化是可能的，但需要注意避免循环依赖的问题。循环依赖发生在两个或多个类相互包含对方的头文件，导致编译器无法解决类的定义顺序。
 
 为了解决循环依赖问题，可以使用前向声明（forward declaration）来声明一个类的存在而不包含其完整定义。前向声明告诉编译器某个类的名称和类型是有效的，这样可以解决类之间的循环依赖问题。
@@ -349,7 +353,6 @@ void ClassA::doSomethingWithClassB(ClassB& b) {
 
 这种方法可以有效避免循环依赖问题，确保类之间的交叉引用能够正常工作。但在实际编程中，还是需要谨慎设计类之间的依赖关系，避免复杂的相互依赖关系，以保持代码的可维护性和可读性。
 
-
 ### 回调函数
 
 回调函数（Callback function）是编程中的一个重要概念，它通常用于事件驱动的编程或异步编程中。回调函数是一种函数，它作为参数传递给另一个函数，然后在某个特定的事件发生时被调用。
@@ -391,5 +394,3 @@ button.on_click(button_click_callback)  # 假设存在一个on_click方法用于
 在这个示例中，`button_click_callback` 是回调函数，它在按钮被点击时被调用。`on_click` 方法用于将回调函数注册到按钮的点击事件上。当按钮被点击时，`button_click_callback` 将被执行。
 
 回调函数在事件驱动编程、异步编程和许多其他编程场景中都非常有用，可以帮助您更灵活地处理不同的事件和任务。
-
-
