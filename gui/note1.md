@@ -243,4 +243,46 @@ int main() {
 
 在GUI库或框架中，比如MyGUI，委托经常用于处理事件。例如，MyGUI提供了一个委托机制，用于处理按钮点击、鼠标事件等用户交互。前面提到的`MyGUI::newDelegate`函数是一个实用工具，用于创建委托，将成员函数绑定到事件，提供了在基于类的上下文中处理回调的便捷方式。
 
-如果你有具体的用例或框架，请提供更多详细信息，我可以提供更有针对性的信息。
+### boost::geometry::within()
+
+`boost::geometry::within()` is a function provided by the Boost.Geometry library. This function is used to check if one geometry is within another. The Boost.Geometry library is part of the Boost C++ Libraries and provides geometry algorithms and data structures.
+
+Here is a basic overview of how `within()` can be used:
+
+```cpp
+#include <iostream>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/point.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
+
+int main() {
+    // Define a point
+    typedef boost::geometry::model::point<double, 2, boost::geometry::cs::cartesian> point_type;
+    point_type point(1.0, 1.0);
+
+    // Define a polygon
+    typedef boost::geometry::model::polygon<point_type> polygon_type;
+    polygon_type polygon;
+
+    // Add points to the polygon
+    boost::geometry::read_wkt("POLYGON((0 0, 0 2, 2 2, 2 0, 0 0))", polygon);
+
+    // Check if the point is within the polygon
+    if (boost::geometry::within(point, polygon)) {
+        std::cout << "Point is within the polygon." << std::endl;
+    } else {
+        std::cout << "Point is outside the polygon." << std::endl;
+    }
+
+    return 0;
+}
+```
+
+In this example:
+
+- `boost::geometry::model::point` is used to define a 2D point.
+- `boost::geometry::model::polygon` is used to define a polygon.
+- `boost::geometry::read_wkt` is used to populate the polygon with points using the Well-Known Text (WKT) representation.
+- `boost::geometry::within(point, polygon)` checks if the point is within the polygon.
+
+Make sure to include the necessary Boost.Geometry headers and link against the Boost.Geometry library when compiling your program. Also, note that the library supports various geometry types and coordinate systems. Adjust the code based on your specific use case and requirements.

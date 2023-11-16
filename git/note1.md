@@ -92,6 +92,16 @@ Additionally, it's important to use version control practices to manage code cha
 
 如果你需要修改更早的提交，可能需要使用 `git rebase` 命令来变基和编辑提交。但在执行 `git rebase` 之前，需要注意仔细阅读 Git 文档或者教程，以免出现不希望的结果。
 
+### Git commit模板配置
+
+git在提交时如果需要以指定的格式提交，可以给git配置一个提交模板(.commit-template)，配置好后，每次git commit时都会将模板中的信息作为初始化信息自动填充到编辑器的提交信息中。
+
+以命令的方式配置：
+
+git config --global commit.template ~/.commit-template
+
+在Git配置文件中配置： 在git配置文件的commit下添加一项template即可，
+
 ### gerrit server创建仓库
 
 在Gerrit服务器上创建仓库需要执行一系列步骤。Gerrit是一个用于代码审查和协作的工具，它通常与Git一起使用。以下是在Gerrit服务器上创建仓库的一般步骤：
