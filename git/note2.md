@@ -9,9 +9,13 @@
    ```
    
    - `-u`：指定清单库的URL。
+   
    - `-b`：指定要使用的清单分支。
+   
    - `-m`：指定清单文件的名称。
+   
    - `--repo-url`：指定`repo`仓库的URL。
+   
    - #### repo init 出现 Permission denied 问题
      
      可以在 repo init 的 --repo-url 的字段加上用户名
@@ -197,6 +201,8 @@ To resolve this issue, you can try the following steps:
 If you continue to encounter the "Permission denied" issue after following these steps, please provide more context about your system and what you were doing when you encountered the error so that I can provide more specific assistance.
 
 ### 修改 repo 的 python 最低版本
+
+当 repo sync 出现一些 python相关的错误时，那么就用以下这种修改方式。
 
 参考：https://blog.csdn.net/m0_37910557/article/details/120764109
 
