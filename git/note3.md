@@ -36,3 +36,59 @@ Please be cautious when using `git pull --rebase`, especially if you have alread
 8. **拆分提交：** 使用 `git rebase -i` 交互式地拆分、编辑或重新排列提交。
 
 请注意，`git rebase` 会改写提交历史，因此在与他人共享分支时要小心使用。如果在已推送的分支上使用 `git rebase`，可能会导致冲突，并且需要强制推送。因此，在协作中，最好仅在本地分支上使用 `git rebase`。
+
+
+### git branch -vv
+`git branch -vv` 是一个用于显示本地分支和它们对应的远程跟踪分支的命令。它的输出包含了每个本地分支的名称、关联的远程分支以及它们之间的关系。
+
+```bash
+git branch -vv
+```
+
+可能的输出示例：
+
+```
+* main           abc1234 [origin/main] Latest commit message
+  feature-branch def5678 [origin/feature-branch: ahead 2] Another commit
+  bugfix-branch  ghi9101 [origin/bugfix-branch: behind 1] Fix a bug
+```
+
+解释一下：
+
+- `main`, `feature-branch`, `bugfix-branch` 是本地分支的名称。
+- `abc1234`, `def5678`, `ghi9101` 是本地分支对应的最新提交的哈希值。
+- `[origin/main]`, `[origin/feature-branch]`, `[origin/bugfix-branch]` 是每个本地分支关联的远程分支。
+- `ahead 2`, `behind 1` 表示本地分支比远程分支领先或者落后的提交数量。
+
+这个命令对于查看当前分支与远程分支的关系，以及了解分支的提交状态非常有用。
+
+
+### git push origin HEAD:/refs/for/project1  vs. git push gerrit01 HEAD:/refs/for/project1
+
+The commands `git push origin HEAD:/refs/for/project1` and `git push gerrit01 HEAD:/refs/for/project1` are functionally similar, but they differ in terms of the remote repository they target.
+
+1. **`git push origin HEAD:/refs/for/project1`:**
+   - `origin` is a common default name for the remote repository from which the local repository was cloned.
+   - This command pushes the changes to the "origin" remote repository, which is typically the default remote repository named "origin" that was created when you cloned your Git repository.
+
+2. **`git push gerrit01 HEAD:/refs/for/project1`:**
+   - `gerrit01` is an alternative name for the remote repository. It could be a different remote repository, possibly on a different server or under a different name.
+   - This command pushes the changes to the "gerrit01" remote repository. It specifies a different remote repository than the default "origin."
+
+In both cases, the `HEAD:/refs/for/project1` part of the command indicates that you are pushing the changes for code review in the "project1" repository on the Gerrit server. This is a Gerrit-specific syntax to initiate the code review process.
+
+Choose the appropriate remote repository name (`origin`, `gerrit01`, or any other name you might have configured) based on your Git repository's remote configuration. The remote repository name is essentially a reference to the URL of the remote repository.
+
+```bash
+# Example: Configuring multiple remotes
+git remote add origin https://github.com/your-username/your-repo.git
+git remote add gerrit01 https://gerrit.example.com/project1.git
+
+# Pushing to origin
+git push origin HEAD:/refs/for/project1
+
+# Pushing to gerrit01
+git push gerrit01 HEAD:/refs/for/project1
+```
+
+Ensure that you use the correct remote repository name for your specific setup.
