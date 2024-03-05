@@ -271,3 +271,53 @@ else
    ```
 
 在 MyGUI 的 `castType` 函数中，它的实现很可能使用了类似 `dynamic_cast` 的机制，因此对于类层次结构中的类型转换，推荐使用 `castType` 或类似的 MyGUI 提供的转换函数，以确保类型转换的安全性。使用 `dynamic_cast` 或类似的安全转换是一种良好的实践，尽管在某些情况下可能会影响性能。
+
+### 静态Lambda与普通Lambda的主要区别
+静态 Lambda 与普通 Lambda 的主要区别在于生命周期和作用域。以下是它们之间的一些主要差异：
+
+1. **生命周期：**
+   - **普通 Lambda：** 普通 Lambda 表达式的生命周期取决于其定义的作用域。如果 Lambda 定义在函数内部，其生命周期将在函数调用结束时结束。如果定义在全局范围内，生命周期将持续整个程序的执行。
+   - **静态 Lambda：** 静态 Lambda 的生命周期始于其第一次调用，并持续到程序结束。静态 Lambda 仅在第一次调用时初始化，之后保留在内存中。
+
+2. **作用域：**
+   - **普通 Lambda：** 普通 Lambda 表达式的作用域与其定义的位置相关。如果定义在函数内部，只能在该函数内部访问。如果定义在全局范围内，可以在整个程序中访问。
+   - **静态 Lambda：** 静态 Lambda 一般定义在静态成员函数或全局范围内，因此在整个程序中都可以访问。
+
+3. **初始化次数：**
+   - **普通 Lambda：** 普通 Lambda 在每次其作用域执行时都会初始化。
+   - **静态 Lambda：** 静态 Lambda 只在第一次调用时进行初始化。之后的调用将重用已经存在的 Lambda。
+
+下面是一个示例，演示了静态 Lambda 和普通 Lambda 的一些差异：
+
+```cpp
+#include <iostream>
+
+void NormalLambdaExample() {
+    auto normalLambda = []() {
+        std::cout << "This is a normal lambda." << std::endl;
+    };
+
+    normalLambda();  // 每次调用都会初始化
+}
+
+void StaticLambdaExample() {
+    // 静态 Lambda
+    static auto staticLambda = []() {
+        std::cout << "This is a static lambda." << std::endl;
+    };
+
+    staticLambda();  // 只在第一次调用时初始化
+}
+
+int main() {
+    NormalLambdaExample();
+    NormalLambdaExample();
+    
+    StaticLambdaExample();
+    StaticLambdaExample();
+
+    return 0;
+}
+```
+
+在这个例子中，`NormalLambdaExample` 包含一个普通 Lambda 表达式，而 `StaticLambdaExample` 包含一个静态 Lambda 表达式。你会注意到，普通 Lambda 在每次调用函数时都会初始化，而静态 Lambda 只在第一次调用时初始化。
