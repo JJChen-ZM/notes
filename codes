@@ -1,0 +1,1307 @@
+avm3d_app::avm3d_app(zros_ui_inst* inst)
+	: zros_ui_app(inst)
+	, m_view(-1)
+	, m_layout(-1)
+	, m_animation_restore_layout(0)
+	, m_animation(NULL)
+	, m_car(NULL)
+    , m_car_shadow(NULL)
+    , m_obstacle_around(NULL)
+	, m_topview(NULL)
+	, m_chnview(NULL)
+	, m_sideview(NULL)
+	, m_root_gui(NULL)
+	, m_topview_gui(NULL)
+	, m_chnview_gui(NULL)
+	, m_first_render(true)
+    , m_slot(NULL)
+    , m_cfg(NULL)
+    ,m_obstacle_2d(NULL)
+	, m_external_layout(AVM3D_LAYOUT_DEFAULT)
+{
+}
+
+avm3d_app::~avm3d_app()
+{
+}
+
+bool avm3d_app::init(bool visible)
+{
+	if (m_inited)
+	{
+		return true;
+	}
+
+	if (!avm3d_cfg_init())
+	{
+		ZERROR << "avm3d_cfg_init failed" << std::endl;
+		return false;
+	}
+	if (!inst_init())
+	{
+		ZERROR << "inst_init failed" << std::endl;
+		return false;
+	}
+	if (!avm3d_msg_init(this))
+	{
+		ZERROR << "avm3d_msg_init failed" << std::endl;
+		return false;
+	}
+	if (!avm3d_setting_init(this))
+	{
+		ZERROR << "avm3d_setting_init failed" << std::endl;
+		return false;
+	}
+
+	zros_ui_app::init(visible);
+	m_inited = true;
+	m_first_render = true;
+	return true;
+}
+
+bool avm3d_app::inst_init()
+{
+	PAVM3D_CFG cfg = avm3d_cfg_get();
+	PAVM3D_CMN_CFG cfg_cmn = &cfg->cmn;
+	if (!zros_ui_app::inst_init())
+	{
+		ZERROR << "zros_ui_app::inst_init failed" << std::endl;
+		goto _error_handler;
+	}
+
+	// m_animation = new avm3d_animation();
+	// if (!m_animation->init())
+	// {
+	// 	ZERROR << "m_animation init failed" << std::endl;
+	// 	goto _error_handler;
+	// }
+
+	m_car = new avm3d_car(m_inst);
+	if (!m_car->init())
+	{
+		ZERROR << "m_car init failed" << std::endl;
+		goto _error_handler;
+	}
+
+	m_car_shadow = new avm3d_car_shadow(m_inst);
+	if (!m_car_shadow->init())
+	{
+		ZERROR << "m_car_shadow init failed" << std::endl;
+		goto _error_handler;
+    }
+
+	m_topview = new avm3d_topview(this, m_viewport_app);
+	if (!m_topview->init(cfg->topview))
+	{
+		ZERROR << "m_topview init failed" << std::endl;
+		goto _error_handler;
+	}
+
+    if(!cfg->obstacle.visible)
+    {
+        m_obstacle_around = new zm_radar_view_spline_around(m_inst);
+        if (m_obstacle_around)  m_obstacle_around->init_radar_cfg();
+    }
+
+	m_chnview = new avm3d_chnview(this, m_viewport_app);
+	if (!m_chnview->init(cfg->chnview))
+	{
+		ZERROR << "m_chnview init failed" << std::endl;
+		goto _error_handler;
+	}
+
+	// m_sideview = new avm3d_sideview(this, m_viewport_app);
+	// if (!m_sideview->init(cfg->sideview))
+	// {
+	// 	ZERROR << "m_sideview init failed" << std::endl;
+	// 	goto _error_handler;
+	// }
+
+	m_root_gui = new avm3d_root_gui(this, m_viewport_gui, cfg_cmn->gui_cmn.cursor_pic);
+	if (!m_root_gui->init(cfg->gui))
+	{
+		ZERROR << "m_root_gui init failed" << std::endl;
+		goto _error_handler;
+	}
+
+    m_topview_gui = new avm3d_topview_gui(this, m_topview->get_gui_viewport());
+	if (!m_topview_gui->init(cfg->topview))
+	{
+		ZERROR << "m_topview_gui init failed" << std::endl;
+		goto _error_handler;
+	}
+
+	m_chnview_gui = new avm3d_chnview_gui(this, m_chnview->get_gui_viewport());
+	if (!m_chnview_gui->init(cfg->chnview))
+	{
+		ZERROR << "m_chnview_gui init failed" << std::endl;
+		goto _error_handler;
+	}
+
+    if(cfg->obstacle.visible)
+    {
+        ZINFO<<"obstacle.visible:"<<cfg->obstacle.visible<<std::endl;
+        m_obstacle_2d = new avm3d_obstacle_2d(m_inst);
+        if (!m_obstacle_2d->init())
+        {
+            ZERROR << "m_obstacle_2d init failed" << std::endl;
+            goto _error_handler;
+        }
+
+        zm_view_obj** view_objs;
+        int count;
+        view_objs = m_obstacle_2d->get_view_objs(count);
+        for (int i = 0; i < count; ++i)
+        {
+            m_topview->set_view_obj(AVM3D_RENDER_ORDER_OBSTACLE + i+1, view_objs[i]);
+        }
+    }
+	create_trajectory_2d(false);
+    create_trajectory_3d(false);
+
+	m_topview->set_view_obj(AVM3D_RENDER_ORDER_CAR_SHADOW, m_car_shadow->get_view_obj());
+	m_topview->set_view_obj(AVM3D_RENDER_ORDER_CAR, m_car->get_view_obj());
+	m_chnview->get_aroundview()->set_view_obj(AVM3D_RENDER_ORDER_CAR, m_car->get_view_obj());
+    m_chnview->get_aroundview()->set_view_obj(AVM3D_RENDER_ORDER_CAR_SHADOW, m_car_shadow->get_view_obj());
+    if(m_obstacle_around)
+    {
+        m_chnview->get_aroundview()->set_view_obj(AVM3D_RENDER_ORDER_OBSTACLE, m_obstacle_around->get_view_obj());
+        m_topview->set_view_obj(AVM3D_RENDER_ORDER_OBSTACLE, m_obstacle_around->get_view_obj());
+    }
+
+	apply_all_settings();
+	return true;
+
+_error_handler:
+	inst_deinit();
+	return false;
+}
+
+void avm3d_app::create_trajectory_2d(bool isApa)
+{
+    bool apa_2d_enable = avm3d_cfg_get()->trajectory.apa_2d_cfg.enable;
+    const AVM3D_CHN_TYPE& chn_type = avm3d_cfg_get()->chnview.chn_type;
+
+    if(isApa && !apa_2d_enable && m_trajectory_2d_avm[0] && m_trajectory_2d_avm[1])
+    {
+        m_trajectory_2d[0] = m_trajectory_2d_avm[0];
+        m_trajectory_2d[1] = m_trajectory_2d_avm[1];
+    }
+    else
+    {
+        m_trajectory_2d[0] = create_trajectory_2d_obj(chn_type.front, isApa);
+        if(chn_type.front != chn_type.rear)
+        {
+            m_trajectory_2d[1] = create_trajectory_2d_obj(chn_type.rear, isApa);
+        }
+        else
+        {
+            m_trajectory_2d[1] = m_trajectory_2d[0];
+        }
+    }
+    if(!isApa)
+    {
+        m_trajectory_2d_avm[0] = m_trajectory_2d[0];
+        m_trajectory_2d_avm[1] = m_trajectory_2d[1];
+    }
+    else
+    {
+        m_trajectory_2d_apa[0] = m_trajectory_2d[0];
+        m_trajectory_2d_apa[1] = m_trajectory_2d[1];
+    }
+    m_trajectory_2d[0]->set_visible(true);
+    m_trajectory_2d[1]->set_visible(true);
+}
+
+void avm3d_app::create_trajectory_3d(bool isApa)
+{
+    bool apa_3d_enable = avm3d_cfg_get()->trajectory.apa_3d_cfg.enable;
+
+    if(isApa && !apa_3d_enable && m_trajectory_avm)
+    {
+        m_trajectory = m_trajectory_avm;
+    }
+    else
+    {
+        m_trajectory = create_trajectory_obj(isApa);
+    }
+    if(!isApa)
+    {
+        m_trajectory_avm = m_trajectory;
+    }
+    else
+    {
+        m_trajectory_apa = m_trajectory;
+    }
+    m_trajectory->set_visible(true);
+}
+
+static bool bUpdated = false;
+void avm3d_app::inst_pre_render(unsigned long long time_us)
+{
+	DR_INSTANCE dr;
+	dr_mgr::Instance()->update(time_us, m_first_render, dr);
+    if (dr.offset.x > 0.0001 || dr.offset.x < -0.0001 || 
+        dr.offset.y > 0.0001 || dr.offset.y < -0.0001 || 
+        dr.angle < -0.00001 || dr.angle > 0.00001) {
+        // ZINFO("avm3d_app::inst_pre_render, m_first_render:%d %f,%f,%f", 
+        //     m_first_render ,dr.offset.x, dr.offset.y, dr.angle);
+		get_car_shadow()->update_dr(dr);
+        bUpdated = true;
+    }
+    // m_root_gui->update_time_mark();
+    update_rcta_status();
+    update_debug_msg();
+
+    if (m_trajectory_2d_avm[0] == nullptr && m_trajectory_2d_need_create) {
+        create_trajectory_2d(false);
+        ZINFO << "avm3d_app::inst_pre_render, create m_trajectory_2d_avm";
+    }
+    if (m_trajectory_avm == nullptr && m_trajectory_need_create) {
+        create_trajectory_3d(false);
+        ZINFO << "avm3d_app::inst_pre_render, create m_trajectory_avm";
+    }
+    if (m_trajectory_2d_apa[0] == nullptr && m_trajectory_2d_apa_need_create) {
+        create_trajectory_2d(true);
+        ZINFO << "avm3d_app::inst_pre_render, create m_trajectory_2d_apa";
+    }
+    if (m_trajectory_apa == nullptr && m_trajectory_apa_need_create) {
+        create_trajectory_3d(true);
+        ZINFO << "avm3d_app::inst_pre_render, create m_trajectory_apa";
+    }
+
+	if (m_first_render)
+    {
+		m_first_render = false;
+		PAVM3D_ANIMATION_CFG cfg_animation = &avm3d_cfg_get()->animation;
+		if (cfg_animation->startup_animation)
+		{
+			play_animation(false, AVM3D_LAYOUT_CHNVIEW_FULL_SCREEN, true);
+		}
+	}
+
+}
+
+void avm3d_app::set_sdk_layout(int sdk_layout)
+{
+    switch (sdk_layout) {
+    case CA_SDK_SHOW_MODE_FULL_SCREEN:
+        m_external_layout = AVM3D_LAYOUT_DEFAULT;
+        break;
+    case CA_SDK_SHOW_MODE_SMALL_SCREEN:
+        m_external_layout = AVM3D_LAYOUT_SMALL_SCREEN;
+        break;
+    default:
+        return;
+    }
+    set_view(m_view);
+}
+
+void avm3d_app::set_layout(int layout, int no_trans)
+{
+	if (layout < 0 || layout >= AVM3D_LAYOUT_MAX)
+	{
+		ZERROR << "invalid layout: " << layout << std::endl;
+		return;
+	}
+	if (m_layout == layout)
+	{
+		return;
+	}
+	m_layout = layout;
+	PAVM3D_CFG cfg = avm3d_cfg_get();
+	cfg->cmn.layout = layout;
+	if(m_topview)m_topview->set_layout(cfg->topview, layout, no_trans);
+	if(m_chnview)m_chnview->set_layout(cfg->chnview, layout, no_trans);
+	if(m_sideview)m_sideview->set_layout(cfg->sideview, layout, no_trans);
+	if(m_topview_gui)m_topview_gui->set_layout(layout, no_trans);
+	if(m_chnview_gui)m_chnview_gui->set_layout(cfg->chnview, layout, no_trans);
+	if(m_root_gui)m_root_gui->set_layout(layout, no_trans);
+}
+
+void avm3d_app::update_layout()
+{
+    ZINFO << "avm3d_app::update_layout: " << m_layout << std::endl;
+    PAVM3D_CFG cfg = avm3d_cfg_get();
+    bool no_trans = true;
+	if(m_topview)m_topview->set_layout(cfg->topview, m_layout, no_trans);
+	if(m_chnview)m_chnview->set_layout(cfg->chnview, m_layout, no_trans);
+	if(m_sideview)m_sideview->set_layout(cfg->sideview, m_layout, no_trans);
+	if(m_topview_gui)m_topview_gui->set_layout(m_layout, no_trans);
+	if(m_chnview_gui)m_chnview_gui->set_layout(cfg->chnview, m_layout, no_trans);
+	if(m_root_gui)m_root_gui->set_layout(m_layout, no_trans);
+}
+
+void avm3d_app::apply_demo_data()
+{
+	PAVM3D_CFG cfg = avm3d_cfg_get();
+	m_car->apply_demo_data(cfg->car);
+    m_car_shadow->apply_demo_data(cfg->car_shadow);
+    if(m_obstacle_2d)m_obstacle_2d->apply_demo_data(cfg->obstacle);
+}
+
+void avm3d_app::apply_all_settings()
+{
+	PAVM3D_CFG cfg = avm3d_cfg_get();
+	set_layout(cfg->cmn.layout, true);
+	// m_animation->apply_settings(cfg->animation);
+	if (m_car)m_car->apply_settings(cfg->car);
+	if (m_car_shadow){
+		m_car_shadow->apply_settings(cfg->car_shadow);
+		m_car_shadow->set_type(CAR_SHADOW_TYPE_PICTURE);
+    }
+
+	if (m_topview)m_topview->apply_settings(cfg->topview);
+	if (m_chnview)m_chnview->apply_settings(cfg->chnview);
+	if (m_sideview)m_sideview->apply_settings(cfg->sideview);
+    if (m_obstacle_2d)m_obstacle_2d->apply_settings(cfg->obstacle);
+
+    if(cfg->cmn.avm_status.visible)
+    {
+        SDKCAInst()->GetParkRecogRecordStatus(cfg->cmn.avm_status.ocr_recording.enable, cfg->cmn.avm_status.ocr_recording.path);
+        m_chnview_gui->set_debug_callback(on_click_debug_button);
+    }
+
+    m_inst->get_color_balance()->set_tgt_luminance(cfg->cmn.luminance);
+    m_inst->get_color_balance()->set_g_gain_r(0.94);
+    m_inst->get_color_balance()->set_g_gain_g(0.94);
+    m_inst->get_color_balance()->set_g_gain_b(0.98);
+    float hsv_h = cfg->cmn.hsv_h;
+    float hsv_s = cfg->cmn.hsv_s;
+    float hsv_v = cfg->cmn.hsv_v;
+    float r_add_ctrl = 0.0;
+    float g_add_ctrl = 0.0;
+    float b_add_ctrl = 0.0;
+    ZINFO("avm3d_app::apply_all_settings, luminance:%f, hsv_h:%f, hsv_s:%f, hsv_v:%f",
+          cfg->cmn.luminance, cfg->cmn.hsv_h, cfg->cmn.hsv_s, cfg->cmn.hsv_v);
+
+    std::string colorPath = std::string(SDKContext()->runtime.zadas_root_path) + std::string("/color_config.xml");
+    if (zros::base::PathExists(colorPath)) {
+        ZINFO("color_balance color_config exist.");
+        boost::property_tree::ptree root_tree;
+        boost::property_tree::read_xml(colorPath, root_tree);
+        boost::property_tree::ptree  color_cfg = root_tree.get_child("color_config");
+        m_inst->get_color_balance()->set_tgt_luminance(color_cfg.get<float>("luminance"));
+        boost::property_tree::ptree  hsv = color_cfg.get_child("hsv");
+
+        hsv_h = hsv.get<float>("hsv_h");
+        hsv_s = hsv.get<float>("hsv_s");
+        hsv_v = hsv.get<float>("hsv_v");
+
+        boost::property_tree::ptree  rgb_ctrl = color_cfg.get_child("rgb_ctrl");
+        r_add_ctrl = rgb_ctrl.get<float>("r_add_ctrl");
+        g_add_ctrl = rgb_ctrl.get<float>("g_add_ctrl");
+        b_add_ctrl = rgb_ctrl.get<float>("b_add_ctrl");
+    }
+
+    ZINFO("color_balance param:h:%f s:%f v:%f r_ctrl:%f g_ctrl:%f b_ctrl:%f",
+            hsv_h, hsv_s, hsv_v, r_add_ctrl, g_add_ctrl, b_add_ctrl);
+    m_inst->get_color_balance()->set_hsv_gain_h(hsv_h);
+    m_inst->get_color_balance()->set_hsv_gain_s(hsv_s);
+    m_inst->get_color_balance()->set_hsv_gain_v(hsv_v);
+    m_inst->get_color_balance()->set_contrast_ctrl(1);
+    m_inst->get_color_balance()->set_rgb_add_ctrl({r_add_ctrl, g_add_ctrl, b_add_ctrl});
+    CHN_RGB_ADD rgb_add;
+    for(int i=0;i<4;i++)
+        rgb_add.chn_rgb_add[i] = {r_add_ctrl, g_add_ctrl, b_add_ctrl};
+    get_chnview()->get_chn_raw()->get_obj()->set_property(PROP_CHNVIEW_COLOR_RGB_ADD,  &rgb_add);
+    get_chnview()->get_chn_sphere()->get_obj()->set_property(PROP_CHNVIEW_COLOR_RGB_ADD,  &rgb_add);
+    get_chnview()->get_rimview()->get_obj(0)->set_property(PROP_CHNVIEW_COLOR_RGB_ADD,  &rgb_add);
+    get_chnview()->get_rimview()->get_obj(1)->set_property(PROP_CHNVIEW_COLOR_RGB_ADD,  &rgb_add);
+}
+
+void avm3d_app::on_animation_finish()
+{
+	set_layout(m_animation_restore_layout, false);
+}
+
+void avm3d_app::animation_finish_handler(unsigned long context, int data)
+{
+	avm3d_app* app = (avm3d_app*)context;
+	app->on_animation_finish();
+}
+
+void avm3d_app::set_rcta_status(int rcta_cmd)
+{
+    if(!avm3d_cfg_get()->topview.cta.visible) return;
+    switch (rcta_cmd) {
+    case CA_SDK_USER_CMD_CTA_LEFT_OFF:
+        m_rcta_content.frequency_left = 0;
+        break;
+    case CA_SDK_USER_CMD_CTA_LEFT_ABNORMAL:
+    case CA_SDK_USER_CMD_CTA_LEFT_FLICKER:
+        m_rcta_content.frequency_left = 1000 / avm3d_cfg_get()->topview.cta.cta_flash_hz;
+        break;
+    case CA_SDK_USER_CMD_CTA_LEFT_CONSTANT:
+        m_rcta_content.frequency_left = -1;
+        break;
+    case CA_SDK_USER_CMD_CTA_RIGHT_OFF:
+        m_rcta_content.frequency_right = 0;
+        break;
+    case CA_SDK_USER_CMD_CTA_RIGHT_ABNORMAL:
+    case CA_SDK_USER_CMD_CTA_RIGHT_FLICKER:
+        m_rcta_content.frequency_right = 1000 / avm3d_cfg_get()->topview.cta.cta_flash_hz;
+        break;
+    case CA_SDK_USER_CMD_CTA_RIGHT_CONSTANT:
+        m_rcta_content.frequency_right = -1;
+        break;
+    default:
+        break;
+    }
+}
+
+void avm3d_app::update_rcta_status()
+{
+    if(!avm3d_cfg_get()->topview.cta.visible) return;
+    zros::timestamp_t timestamp = zros::base::GetTickCount();
+    auto get_rcta_visit = [timestamp](const int &frequency, zros::timestamp_t& last, bool& visible){
+        if(frequency == 0) visible = false;
+        else if(frequency < 0) visible = true;
+        else if(timestamp - last > frequency)
+        {
+            visible = !visible;
+            last = timestamp;
+        }
+    };
+    get_rcta_visit(m_rcta_content.frequency_left, m_rcta_content.last_show_left, m_rcta_content.visible_left);
+    if(m_rcta_content.frequency_right != m_rcta_content.frequency_left)
+    {
+        get_rcta_visit(m_rcta_content.frequency_right, m_rcta_content.last_show_right, m_rcta_content.visible_right);
+    }
+    else //频率相同时保持左右显示状态一致
+    {
+        m_rcta_content.last_show_right = m_rcta_content.last_show_left;
+        m_rcta_content.visible_right = m_rcta_content.visible_left;
+    }
+    m_topview_gui->set_cta_visisble(m_rcta_content.visible_left, m_rcta_content.visible_right);
+    m_chnview_gui->set_cta_visisble(m_rcta_content.visible_left, m_rcta_content.visible_right);
+}
+
+void avm3d_app::set_chnview_type(int type)
+{
+	avm3d_cfg_get()->chnview.view_type = type;
+	m_chnview->set_view_type(type);
+	m_chnview_gui->set_view_type(type);
+}
+
+void avm3d_app::set_active_chnviewchannel(int channel)
+{
+    switch (avm3d_cfg_get()->chnview.view_type) {
+    case ZROS_UI_SETTING_VIEW_TYPE_RAW:
+        m_chnview->get_chn_raw()->set_active_channel(channel);
+        break;
+    case ZROS_UI_SETTING_VIEW_TYPE_SPHERE:
+        m_chnview->get_chn_sphere()->set_active_channel(channel);
+        break;
+    default:
+        break;
+    }
+}
+
+void avm3d_app::set_car_wheel_angle(float angle)
+{
+	avm3d_cfg_get()->car.demo_data.wheel_angle = angle;
+	m_car->set_wheel_angle(angle);
+}
+
+void avm3d_app::set_car_door_status(CAR_DOORS_STATUS& door_status)
+{
+	avm3d_cfg_get()->car.demo_data.door_status = door_status;
+	m_car->set_door_status(door_status);
+	if (m_car_trans_visible) {
+		m_topview->set_car_door_status(door_status);
+	}
+	unsigned int enable_map = CHANNEL_MASK_ALL;
+	if (door_status.left & 1)
+	{
+		enable_map &= ~CHANNEL_MASK(CHANNEL_LEFT);
+	}
+	if (door_status.right & 1)
+	{
+		enable_map &= ~CHANNEL_MASK(CHANNEL_RIGHT);
+	}
+}
+
+void avm3d_app::set_car_door_position(CAR_DOOR_POSITION& door_position)
+{
+	avm3d_cfg_get()->car.demo_data.door_position = door_position;
+	m_car->set_door_position(door_position);
+}
+
+void avm3d_app::reset_shadow()
+{
+	m_car_shadow->clean();
+    if (bUpdated) {
+        DR_INSTANCE dr= {0};
+        get_car_shadow()->update_dr(dr);
+    }
+	dr_mgr::Instance()->reset();
+}
+
+void avm3d_app::set_car_shadow_type(int type)
+{
+	ZINFO << "avm3d_app::set_car_shadow_type, type = " << type;
+	avm3d_cfg_get()->car_shadow.type = type;
+    m_car_shadow->set_type(type);
+}
+
+void avm3d_app::set_car_visible(int visible)
+{
+	avm3d_cfg_get()->car.visible = visible;
+	m_car->set_visible(visible);
+}
+
+void avm3d_app::set_car_trans_visible(int visible)
+{
+    if (m_topview == NULL) {
+        ZERROR << "avm3d_app::set_car_trans_visible, m_topview is NULL!";
+        return;
+    }
+    m_topview->set_car_trans_visible(visible);
+    m_car_trans_visible = visible;
+}
+
+void avm3d_app::set_camera_statue(const SDK_VEHICLE_CAMERA_STATE& stCamera)
+{
+    m_camera_status = stCamera;
+    update_camera_statue();
+}
+
+void avm3d_app::update_camera_statue()
+{
+    switch (m_view) {
+    case AVM3D_VIEW_ID_2D_LANDSCAPE_FRONT:
+    case AVM3D_VIEW_ID_2D_LANDSCAPE_FRONT_WIDE:
+        m_chnview_gui->set_no_video_visible(m_camera_status.u8FrontCameraState == 0);
+        break;
+    case AVM3D_VIEW_ID_2D_LANDSCAPE_REAR:
+    case AVM3D_VIEW_ID_2D_LANDSCAPE_REAR_WIDE:
+        m_chnview_gui->set_no_video_visible(m_camera_status.u8RearCameraState == 0);
+        break;
+    case AVM3D_VIEW_ID_2D_LANDSCAPE_LEFT:
+        m_chnview_gui->set_no_video_visible(m_camera_status.u8LeftCameraState == 0);
+        break;
+    case AVM3D_VIEW_ID_2D_LANDSCAPE_RIGHT:
+        m_chnview_gui->set_no_video_visible(m_camera_status.u8RightCameraState == 0);
+        break;
+    default:
+        m_chnview_gui->set_no_video_visible(false);
+        break;
+    }
+}
+
+void avm3d_app::update_car_color()
+{
+	m_inst->reload_textures();
+	PAVM3D_CAR_CFG cfg_car = &avm3d_cfg_get()->car;
+	struct CAR_MODEL_INFO model = {cfg_car->model.model,
+		cfg_car->model.bin, cfg_car->model.texture};
+	m_car->set_model(model);
+}
+
+void avm3d_app::set_trajectory_wheel_angle(float angle)
+{
+	avm3d_cfg_get()->trajectory.demo_data.wheel_angle = angle;
+	if (m_trajectory)
+		m_trajectory->set_wheel_angle(angle);
+    if (m_trajectory_2d[0] && m_trajectory_2d[1])
+    {
+        m_trajectory_2d[0]->set_wheel_angle(angle);
+        m_trajectory_2d[1]->set_wheel_angle(angle);
+    }
+}
+
+void avm3d_app::set_trajectory_visible(int traj_id, int visible)
+{
+    avm3d_cfg_get()->trajectory.demo_data.visible_3d[traj_id] = visible;
+    if (visible && m_isAvmStyle) {
+        m_trajectory_need_create = true;
+    } else if (visible && !m_isAvmStyle) {
+        m_trajectory_apa_need_create = true;
+    }
+
+    if (m_trajectory) {
+        m_trajectory->set_visible(traj_id, visible);
+    }
+}
+
+void avm3d_app::set_2d_trajectory_visible(int traj_id, int visible)
+{
+    avm3d_cfg_get()->trajectory.demo_data.visible[traj_id] = visible;
+    if (visible && m_isAvmStyle) {
+        m_trajectory_2d_need_create = true;
+    } else if (visible && !m_isAvmStyle) {
+        m_trajectory_2d_apa_need_create = true;
+    }
+
+    if (m_trajectory_2d[0]) {
+        m_trajectory_2d[0]->set_visible(traj_id, visible);
+    }
+    if (m_trajectory_2d[1]) {
+        m_trajectory_2d[1]->set_visible(traj_id, visible);
+    }
+}
+
+std::shared_ptr<avm3d_trajectory> avm3d_app::create_trajectory_obj(bool isApa)
+{
+    PAVM3D_CFG cfg = avm3d_cfg_get();
+    avm3d_trajectory* trajectory = new avm3d_trajectory(m_inst);
+    if (!trajectory->init(isApa ? &cfg->trajectory.apa_3d_cfg : &cfg->trajectory.avm_3d_cfg)) {
+        ZERROR << "trajectory init failed" << std::endl;
+        return nullptr;
+    }
+    int order = isApa ? AVM3D_RENDER_ORDER_TRAJECTORY_APA : AVM3D_RENDER_ORDER_TRAJECTORY;
+    m_topview->set_view_obj(order, trajectory->get_view_obj());
+    //m_chnview->get_aroundview()->set_view_obj(order, trajectory->get_view_obj());
+
+    trajectory->apply_demo_data(cfg->trajectory);
+    trajectory->apply_settings(cfg->trajectory);
+    ZINFO << "create_trajectory_obj impl isApa:" << isApa << std::endl;
+    return std::shared_ptr<avm3d_trajectory>(trajectory);
+}
+
+std::shared_ptr<avm3d_trajectory_2d> avm3d_app::create_trajectory_2d_obj(int type, bool isApa)
+{
+    PAVM3D_CFG cfg = avm3d_cfg_get();
+    avm3d_trajectory_2d* trajectory_2d = new avm3d_trajectory_2d(m_inst);
+    if (!trajectory_2d->init(isApa ? &cfg->trajectory.apa_2d_cfg : &cfg->trajectory.avm_2d_cfg, type)) {
+        ZERROR << "trajectory_2d init failed" << std::endl;
+        return nullptr;
+    }
+    int order = isApa ? AVM3D_RENDER_ORDER_TRAJECTORY_APA : AVM3D_RENDER_ORDER_TRAJECTORY;
+    if(type == ZROS_UI_SETTING_VIEW_TYPE_SPHERE)
+    {
+        m_chnview->get_chn_sphere()->set_view_obj(order, trajectory_2d->get_view_obj());
+    }
+    else
+    {
+        m_chnview->get_chn_raw()->set_view_obj(order, trajectory_2d->get_view_obj());
+    }
+
+    trajectory_2d->apply_demo_data(cfg->trajectory);
+    trajectory_2d->apply_settings(cfg->trajectory);
+    ZINFO << "create_trajectory_2d_obj impl type:" << type << " isApa:" << isApa << std::endl;
+    return std::shared_ptr<avm3d_trajectory_2d>(trajectory_2d);
+}
+
+void avm3d_app::create_slot_obj()
+{
+    if(m_slot) return;
+    avm3d_slot* slot = new avm3d_slot(m_inst);
+    if(!slot->init())
+    {
+        ZERROR << __FUNCTION__ << " slot init failed" << std::endl;
+        return ;
+    }
+    m_cfg = new slot_cfg();
+    zm_view_obj* slot_obj = slot->get_slot_obj();
+    zm_view_obj* slot_num_obj = slot->get_slot_num_obj();
+    zm_view_obj* selected_slot_obj = slot->get_selected_slot_obj();
+    m_topview->set_view_obj(AVM3D_RENDER_ORDER_SLOT, slot_obj);
+    m_topview->set_view_obj(AVM3D_RENDER_ORDER_SLOT_NUM, slot_num_obj);
+    m_topview->set_view_obj(AVM3D_RENDER_ORDER_SLOT_SELECTED, selected_slot_obj);
+    m_slot = slot;
+}
+
+void avm3d_app::SetTrajStyle(bool isAvmTraj)
+{
+    ZINFO << "avm3d_app::SetTrajStyle, isAvmTraj = " << isAvmTraj;
+    m_isAvmStyle = isAvmTraj;
+
+    if (isAvmTraj) {
+        if (m_trajectory_apa != nullptr) {
+            m_trajectory_apa->set_visible(false);
+            ZINFO << "avm3d_app::SetTrajStyle, m_trajectory_apa->set_visible(false)";
+        }
+        if (m_trajectory_2d_apa[0] != nullptr) {
+            m_trajectory_2d_apa[0]->set_visible(false);
+            m_trajectory_2d_apa[1]->set_visible(false);
+            ZINFO << "avm3d_app::SetTrajStyle, m_trajectory_2d_apa->set_visible(false)";
+        }
+        if (m_trajectory_avm != nullptr) {
+            m_trajectory_avm->set_visible(true);
+            ZINFO << "avm3d_app::SetTrajStyle, m_trajectory_avm->set_visible(true)";
+        }
+        if (m_trajectory_2d_avm[0] != nullptr) {
+            m_trajectory_2d_avm[0]->set_visible(true);
+            m_trajectory_2d_avm[1]->set_visible(true);
+            ZINFO << "avm3d_app::SetTrajStyle, m_trajectory_2d_avm->set_visible(true)";
+        }
+        if(m_trajectory_avm)
+        	m_trajectory = m_trajectory_avm;
+        if(m_trajectory_2d_avm[0])
+        	m_trajectory_2d[0] = m_trajectory_2d_avm[0];
+        if(m_trajectory_2d_avm[1])
+        	m_trajectory_2d[1] = m_trajectory_2d_avm[1];
+
+    } else {
+        if (m_trajectory_avm != nullptr) {
+            m_trajectory_avm->set_visible(false);
+            ZINFO << "avm3d_app::SetTrajStyle, m_trajectory_avm->set_visible(false)";
+        }
+        if (m_trajectory_2d_avm[0] != nullptr) {
+            m_trajectory_2d_avm[0]->set_visible(false);
+            m_trajectory_2d_avm[1]->set_visible(false);
+            ZINFO << "avm3d_app::SetTrajStyle, m_trajectory_2d_avm->set_visible(false)";
+        }
+        if (m_trajectory_apa != nullptr) {
+            m_trajectory_apa->set_visible(true);
+            ZINFO << "avm3d_app::SetTrajStyle, m_trajectory_apa->set_visible(true)";
+        }
+        if (m_trajectory_2d_apa[0] != nullptr) {
+            m_trajectory_2d_apa[0]->set_visible(true);
+            m_trajectory_2d_apa[1]->set_visible(true);
+            ZINFO << "avm3d_app::SetTrajStyle, m_trajectory_2d_apa->set_visible(true)";
+        }
+        if(m_trajectory_apa)
+        	m_trajectory = m_trajectory_apa;
+        if(m_trajectory_2d_apa[0])
+        	m_trajectory_2d[0] = m_trajectory_2d_apa[0];
+        if(m_trajectory_2d_apa[1])
+        	m_trajectory_2d[1] = m_trajectory_2d_apa[1];
+    }
+    float angle = avm3d_cfg_get()->trajectory.demo_data.wheel_angle;
+    if(m_trajectory)
+    {
+        m_trajectory->set_wheel_angle(angle);
+    }
+    if(m_trajectory_2d[0])
+    {
+        m_trajectory_2d[0]->set_wheel_angle(angle);
+    }
+    if(m_trajectory_2d[1])
+    {
+        m_trajectory_2d[1]->set_wheel_angle(angle);
+    }
+}
+
+void avm3d_app::set_2d_obstacle_visible(int visible)
+{
+    avm3d_cfg_get()->obstacle.visible = visible;
+    if(m_obstacle_around)m_obstacle_around->set_visible(visible);
+    if(m_obstacle_2d)m_obstacle_2d->set_visible(visible);
+}
+
+void avm3d_app::set_radar_data(const USS_PDC_DATA& radar_data)
+{
+    avm3d_cfg_get()->obstacle.demo_data = radar_data;
+    if(m_obstacle_around)m_obstacle_around->update_radar_data(radar_data);
+    if(m_obstacle_2d)m_obstacle_2d->set_radar_data(radar_data);
+	m_topview_gui->set_radar_distance(radar_data);
+}
+
+void avm3d_app::set_2d_radar_data(const USS_PDC_DATA& radar_data)
+{
+	avm3d_cfg_get()->obstacle.demo_data = radar_data;
+	m_topview_gui->set_radar_distance(avm3d_cfg_get()->obstacle.demo_data);
+	bool ob_disp = false;
+	for (auto d : avm3d_cfg_get()->obstacle.demo_data.sectors) {
+		if(d != USS_PDC_NO_OBJ) {
+			ob_disp = true;
+			break;
+		}
+	}
+	if (ob_disp) {
+		avm3d_cfg_get()->obstacle.visible = true;
+	} else {
+		avm3d_cfg_get()->obstacle.visible = false;
+	}
+	avm3d_cfg_get()->obstacle.uss_data_changed = true;
+}
+
+void avm3d_app::set_view(int view)
+{
+    PAVM3D_CFG cfg = avm3d_cfg_get();
+    PAVM3D_CHNVIEW_CFG cfg_chnview = &cfg->chnview;
+    switch (view)
+    {
+    case AVM3D_VIEW_ID_2D_CALIB_FRONT:
+        set_layout(AVM3D_LAYOUT_CALIB, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_RAW);
+        m_chnview->get_chn_raw()->set_active_channel(CHANNEL_FRONT);
+        break;
+    case AVM3D_VIEW_ID_2D_CALIB_LEFT:
+        set_layout(AVM3D_LAYOUT_CALIB, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_RAW);
+        m_chnview->get_chn_raw()->set_active_channel(CHANNEL_LEFT);
+        break;
+    case AVM3D_VIEW_ID_2D_CALIB_REAR:
+        set_layout(AVM3D_LAYOUT_CALIB, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_RAW);
+        m_chnview->get_chn_raw()->set_active_channel(CHANNEL_REAR);
+        break;
+    case AVM3D_VIEW_ID_2D_CALIB_RIGHT:
+        set_layout(AVM3D_LAYOUT_CALIB, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_RAW);
+        m_chnview->get_chn_raw()->set_active_channel(CHANNEL_RIGHT);
+        break;
+    case AVM3D_VIEW_ID_2D_LANDSCAPE_FRONT:
+        set_layout(m_external_layout, true);
+        set_chnview_type(cfg_chnview->chn_type.front);
+        set_active_chnviewchannel(CHANNEL_FRONT);
+        break;
+    case AVM3D_VIEW_ID_2D_LANDSCAPE_LEFT:
+        set_layout(m_external_layout, true);
+        set_chnview_type(cfg_chnview->chn_type.left);
+        set_active_chnviewchannel(CHANNEL_LEFT);
+        break;
+    case AVM3D_VIEW_ID_2D_LANDSCAPE_REAR:
+        set_layout(m_external_layout, true);
+        set_chnview_type(cfg_chnview->chn_type.rear);
+        set_active_chnviewchannel(CHANNEL_REAR);
+        break;
+    case AVM3D_VIEW_ID_2D_LANDSCAPE_RIGHT:
+        set_layout(m_external_layout, true);
+        set_chnview_type(cfg_chnview->chn_type.right);
+        set_active_chnviewchannel(CHANNEL_RIGHT);
+        break;
+    case AVM3D_VIEW_ID_2D_LANDSCAPE_FRONT_WIDE:
+        set_layout(AVM3D_LAYOUT_CHNVIEW_FULL_SCREEN, true);
+        set_chnview_type(cfg_chnview->chn_type.front_wide);
+        set_active_chnviewchannel(CHANNEL_FRONT);
+        break;
+    case AVM3D_VIEW_ID_2D_LANDSCAPE_REAR_WIDE:
+        set_layout(AVM3D_LAYOUT_CHNVIEW_FULL_SCREEN, true);
+        set_chnview_type(cfg_chnview->chn_type.rear_wide);
+        set_active_chnviewchannel(CHANNEL_REAR);
+        break;
+    case AVM3D_VIEW_ID_2D_LANDSCAPE_RIM:
+        set_layout(m_external_layout, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_RIMVIEW);
+        m_chnview->get_rimview()->set_view_id(cfg_chnview->rimview,
+                                              AVM3D_RIMVIEW_VIEW_ID_FULL);
+        break;
+    case AVM3D_VIEW_ID_2D_LANDSCAPE_RIM_FRONT:
+        set_layout(m_external_layout, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_RIMVIEW);
+        m_chnview->get_rimview()->set_view_id(cfg_chnview->rimview,
+                                              AVM3D_RIMVIEW_VIEW_ID_FRONT);
+        break;
+    case AVM3D_VIEW_ID_2D_LANDSCAPE_RIM_REAR:
+        set_layout(m_external_layout, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_RIMVIEW);
+        m_chnview->get_rimview()->set_view_id(cfg_chnview->rimview,
+                                              AVM3D_RIMVIEW_VIEW_ID_REAR);
+        break;
+    case AVM3D_VIEW_ID_3D_LANDSCAPE_FRONT:
+        set_layout(m_external_layout, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_AROUNDVIEW);
+        m_chnview->get_aroundview()->set_view_id(cfg_chnview->aroundview,
+                                                 AVM3D_AROUNDVIEW_VIEW_ID_OUTER_FRONT, !is_landscape_3d_view(m_view));
+        break;
+    case AVM3D_VIEW_ID_3D_LANDSCAPE_LEFT:
+        set_layout(m_external_layout, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_AROUNDVIEW);
+        m_chnview->get_aroundview()->set_view_id(cfg_chnview->aroundview,
+                                                 AVM3D_AROUNDVIEW_VIEW_ID_OUTER_LEFT, !is_landscape_3d_view(m_view));
+        break;
+    case AVM3D_VIEW_ID_3D_LANDSCAPE_REAR:
+        set_layout(m_external_layout, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_AROUNDVIEW);
+        m_chnview->get_aroundview()->set_view_id(cfg_chnview->aroundview,
+                                                 AVM3D_AROUNDVIEW_VIEW_ID_OUTER_REAR, !is_landscape_3d_view(m_view));
+        break;
+    case AVM3D_VIEW_ID_3D_LANDSCAPE_RIGHT:
+        set_layout(m_external_layout, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_AROUNDVIEW);
+        m_chnview->get_aroundview()->set_view_id(cfg_chnview->aroundview,
+                                                 AVM3D_AROUNDVIEW_VIEW_ID_OUTER_RIGHT, !is_landscape_3d_view(m_view));
+        break;
+    case AVM3D_VIEW_ID_3D_LANDSCAPE_FRONT_LEFT:
+        set_layout(m_external_layout, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_AROUNDVIEW);
+        m_chnview->get_aroundview()->set_view_id(cfg_chnview->aroundview,
+                                                 AVM3D_AROUNDVIEW_VIEW_ID_OUTER_FRONT_LEFT, !is_landscape_3d_view(m_view));
+        break;
+    case AVM3D_VIEW_ID_3D_LANDSCAPE_FRONT_RIGHT:
+        set_layout(m_external_layout, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_AROUNDVIEW);
+        m_chnview->get_aroundview()->set_view_id(cfg_chnview->aroundview,
+                                                 AVM3D_AROUNDVIEW_VIEW_ID_OUTER_FRONT_RIGHT, !is_landscape_3d_view(m_view));
+        break;
+    case AVM3D_VIEW_ID_3D_LANDSCAPE_REAR_LEFT:
+        set_layout(m_external_layout, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_AROUNDVIEW);
+        m_chnview->get_aroundview()->set_view_id(cfg_chnview->aroundview,
+                                                 AVM3D_AROUNDVIEW_VIEW_ID_OUTER_REAR_LEFT, !is_landscape_3d_view(m_view));
+        break;
+    case AVM3D_VIEW_ID_3D_LANDSCAPE_REAR_RIGHT:
+        set_layout(m_external_layout, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_AROUNDVIEW);
+        m_chnview->get_aroundview()->set_view_id(cfg_chnview->aroundview,
+                                                 AVM3D_AROUNDVIEW_VIEW_ID_OUTER_REAR_RIGHT, !is_landscape_3d_view(m_view));
+        break;
+    case AVM3D_VIEW_ID_3D_LANDSCAPE_MAGNIFY_FRONT:
+        set_layout(m_external_layout, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_AROUNDVIEW);
+        m_chnview->get_aroundview()->set_view_id(cfg_chnview->aroundview,
+                                                 AVM3D_AROUNDVIEW_VIEW_ID_MAGNIFY_FRONT, !is_landscape_3d_view(m_view));
+        break;
+
+    case AVM3D_VIEW_ID_2D_APA_LANDSCAPE_FRONT:
+        set_layout(AVM3D_LAYOUT_APA, true);
+        set_chnview_type(cfg_chnview->chn_type.front);
+        set_active_chnviewchannel(CHANNEL_FRONT);
+        break;
+    case AVM3D_VIEW_ID_2D_APA_LANDSCAPE_LEFT:
+        set_layout(AVM3D_LAYOUT_APA, true);
+        set_chnview_type(cfg_chnview->chn_type.left);
+        set_active_chnviewchannel(CHANNEL_LEFT);
+        break;
+    case AVM3D_VIEW_ID_2D_APA_LANDSCAPE_REAR:
+        set_layout(AVM3D_LAYOUT_APA, true);
+        set_chnview_type(cfg_chnview->chn_type.rear);
+        set_active_chnviewchannel(CHANNEL_REAR);
+        break;
+    case AVM3D_VIEW_ID_2D_APA_LANDSCAPE_RIGHT:
+        set_layout(AVM3D_LAYOUT_APA, true);
+        set_chnview_type(cfg_chnview->chn_type.right);
+        set_active_chnviewchannel(CHANNEL_RIGHT);
+        break;
+    case AVM3D_VIEW_ID_2D_APA_LANDSCAPE_RIM:
+        set_layout(AVM3D_LAYOUT_APA, true);
+        set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_RIMVIEW);
+        m_chnview->get_rimview()->set_view_id(cfg_chnview->rimview,
+                                              AVM3D_RIMVIEW_VIEW_ID_FRONT);
+        break;
+    default:
+        ZERROR << "unknown view id: " << view << std::endl;
+        break;
+    }
+    m_view = view;
+    update_camera_statue();
+}
+
+void avm3d_app::set_3d_view(int angle)
+{
+    PAVM3D_CFG cfg = avm3d_cfg_get();
+    PAVM3D_CMN_CFG cfg_cmn = &cfg->cmn;
+    m_view = AVM3D_VIEW_ID_3D_LANDSCAPE_FRONT;
+    set_layout(m_external_layout, true);
+    set_chnview_type(ZROS_UI_SETTING_VIEW_TYPE_AROUNDVIEW);
+    ZM_3D_VIEW view = cfg->chnview.aroundview.views[cfg_cmn->layout][AVM3D_AROUNDVIEW_VIEW_ID_OUTER_FRONT];
+    view.head_angle = angle;
+    m_chnview->get_aroundview()->set_3d_view(view, NULL, 0, false);
+    update_camera_statue();
+}
+
+void avm3d_app::start_calibration()
+{
+	ZINFO << "avm3d_app::start_calibration...";
+	m_inst->ShowApp(ZROS_UI_APP_FIO3D);
+}
+
+void avm3d_app::apply_on_the_fly()
+{
+	ZINFO << "avm3d_app::apply_on_the_fly";
+	m_topview->apply_on_the_fly();
+	m_chnview->apply_on_the_fly();
+	m_car_shadow->apply_on_the_fly();
+	//reset trajectory
+	m_trajectory_2d_avm[0].reset();
+	m_trajectory_2d_avm[1].reset();
+	m_trajectory_2d_apa[0].reset();
+	m_trajectory_2d_apa[1].reset();
+}
+
+void avm3d_app::save_shadow()
+{
+//	get_car_shadow()->save();
+	dr_mgr::Instance()->reset(); // reset dr and timestamp when avm exit
+	m_root_gui->update_time_mark(true); // reset time mark when avm exit
+}
+
+void avm3d_app::set_time_mark_visible(bool visible)
+{
+	if (m_root_gui)
+		m_root_gui->set_time_mark_visible(visible);
+}
+
+void avm3d_app::update_fps_mark(float fps)
+{
+    AVM3D_STATUS_MSG& status = avm3d_cfg_get()->cmn.avm_status;
+    status.fps = fps;
+}
+
+static void on_click_debug_button()
+{
+    if(!avm3d_cfg_get()->cmn.avm_status.visible) return;
+
+    bool& enable = avm3d_cfg_get()->cmn.avm_status.ocr_recording.enable;
+    enable = !enable;
+    SDKCAInst()->SetParkRecogRecording(enable);
+}
+
+void avm3d_app::update_debug_msg()
+{
+    const AVM3D_STATUS_MSG& status = avm3d_cfg_get()->cmn.avm_status;
+    if(status.visible)
+    {
+        time_t t = time(NULL);
+        char tmp[128] = {0};
+        struct tm* timinfo;
+        timinfo = localtime(&t);
+        strftime(tmp, sizeof(tmp), "  %Y-%m-%d %H-%M-%S", timinfo);
+        DRResult dr_result = DRAdapter_getLastResult(0);
+
+        std::string msg = zros::car_instance::CarInstance::Instance()->GetName() + std::string(tmp) + std::string("\n");
+        msg += std::string("fps:") + std::to_string(status.fps) + std::string("\n");
+        //Vechicle
+        msg += std::string("gear:") + std::to_string(avm3d_cfg_get()->car.demo_data.gear) + std::string("\n");
+        msg += std::string("speed:") + std::to_string(avm3d_cfg_get()->car.demo_data.speed) + std::string("\n");
+        msg += std::string("wheel:") + std::to_string(avm3d_cfg_get()->car.demo_data.wheel_angle) + std::string("\n");
+        //DR
+        snprintf(tmp, sizeof(tmp), "dr: x:%.3f y:%.3f angle:%.3f", dr_result.x, dr_result.y, dr_result.yaw);
+        msg += std::string(tmp) + std::string("\n");
+        //PDC
+        const USS_PDC_DATA& pdc = avm3d_cfg_get()->obstacle.demo_data;
+        snprintf(tmp, sizeof(tmp), "flo:%d flm:%d frm:%d fro:%d", pdc.sectors[USS_PDC_FLO], pdc.sectors[USS_PDC_FLM], pdc.sectors[USS_PDC_FRM], pdc.sectors[USS_PDC_FRO]);
+        msg += std::string(tmp) + std::string("\n");
+        snprintf(tmp, sizeof(tmp), "flc:%d fls:%d frc:%d frs:%d", pdc.sectors[USS_PDC_FLC], pdc.sectors[USS_PDC_FLS], pdc.sectors[USS_PDC_FRC], pdc.sectors[USS_PDC_FRS]);
+        msg += std::string(tmp) + std::string("\n");
+        snprintf(tmp, sizeof(tmp), "rlo:%d rlm:%d rrm:%d rro:%d", pdc.sectors[USS_PDC_RLO], pdc.sectors[USS_PDC_RLM], pdc.sectors[USS_PDC_RRM], pdc.sectors[USS_PDC_RRO]);
+        msg += std::string(tmp) + std::string("\n");
+        snprintf(tmp, sizeof(tmp), "rlc:%d rls:%d rrc:%d rrs:%d", pdc.sectors[USS_PDC_RLC], pdc.sectors[USS_PDC_RLS], pdc.sectors[USS_PDC_RRC], pdc.sectors[USS_PDC_RRS]);
+        msg += std::string(tmp) + std::string("\n");
+        //OCR
+        msg += std::string("ocr pattern:") + status.ocr_pattern + std::string("\n");
+        msg += std::string("path:");
+        if(status.ocr_recording.path.size() <= 30)
+        {
+            msg += status.ocr_recording.path + std::string("\n");
+        }
+        else
+        {
+            msg += status.ocr_recording.path.substr(0, 30) + std::string("\n");
+            msg += status.ocr_recording.path.substr(30) + std::string("\n");
+        }
+        for(auto it=status.ocr_record.begin(); it!=status.ocr_record.end(); it++)
+        {
+            const AVM3D_OCR_RECORD& record = it->second;
+            snprintf(tmp, sizeof(tmp), "num: %s score:%.3f ts:%ld", record.num.c_str(), record.score, record.time);
+            msg += std::string(tmp) + std::string("\n");
+        }
+        m_chnview_gui->set_debug_msg(msg);
+        if(status.ocr_recording.enable)
+        {
+            msg = "OCR录制中，点击停止";
+            m_chnview_gui->set_debug_switch(msg, false);
+        }
+        else
+        {
+            msg = "点击进行OCR录制";
+            m_chnview_gui->set_debug_switch(msg, true);
+        }
+    }
+}
+
+void avm3d_app::set_time_mark_font_size(int fontSize)
+{
+	if (m_root_gui)
+		m_root_gui->set_time_mark_font_size(fontSize);
+}
+
+void avm3d_app::set_time_mark_position(int x, int y)
+{
+	if (m_root_gui)
+		m_root_gui->set_time_mark_position(x, y);
+}
+
+void avm3d_app::show_dialog_widget(const char* text)
+{
+    if(m_root_gui)
+        m_root_gui->show_dialog_widget(text);
+}
+
+void avm3d_app::root_gui_gesture_double_click_handler(int x, int y)
+{
+#ifndef PLATFORM_ARCH_ANDROID_X86_X64
+    std::string dbgPath = std::string(SDKContext()->runtime.zadas_root_path) + std::string("/zmdbg_dir");
+    if (!zros::base::PathExists(dbgPath)) {
+        return;
+    }
+#endif
+    const ZM_RECT_SIZE& screen_size = m_inst->get_fb_size();
+    float x_ratio = (float)x / screen_size.width;
+    float y_ratio = (float)y / screen_size.height;
+    ZINFO << "avm3d_app::root_gui_gesture_double_click_handler, (" << x_ratio << "," << y_ratio << ")";
+    if (x_ratio > 0.9 && y_ratio > 0.9) {
+        m_inst->AddTask(std::bind(&avm3d_root_gui::show_menu, m_root_gui, true));
+    }
+
+#if 0
+    static bool visible = false;
+    if (!zros::base::PathExists("/sdcard/com.byd.avc/zm_fps")) {
+        return;
+    }
+
+    if (m_root_gui != nullptr) {
+        visible = !visible;
+        m_root_gui->set_fps_mark_visible(visible);
+    }
+
+#endif
+}
+
+void avm3d_app::chnview_gui_gesture_moving_handler(int x, int y, int no_trans)
+{
+    if (m_view == AVM3D_VIEW_ID_3D_LANDSCAPE_MAGNIFY_FRONT) {
+        return;
+    }
+	m_chnview->gesture_moving_handler(avm3d_cfg_get()->chnview, x, y, no_trans);
+}
+
+void avm3d_app::action_root_close_handler()
+{
+	m_root_gui->show_menu(false);
+}
+
+void avm3d_app::action_root_reload_handler()
+{
+	avm3d_cfg_deinit();
+	avm3d_cfg_init();
+	m_root_gui->reload_menu();
+	apply_all_settings();
+}
+
+void avm3d_app::action_root_reset_to_factory_handler()
+{
+	zros::base::PathResolver* path_resolver = zros::base::PathResolver::Instance();
+	zros::base::RemoveAll(path_resolver->GetResPath("", "", false));
+	zros::base::RemoveAll(path_resolver->GetCachePath(""));
+	avm3d_cfg_deinit();
+	avm3d_cfg_init();
+	m_root_gui->reload_menu();
+	apply_all_settings();
+}
+
+void avm3d_app::action_root_reload_calib_handler()
+{
+    zros::base::PathResolver* path_resolver = zros::base::PathResolver::Instance();
+    zros::base::RemoveAll(path_resolver->GetCachePath(""));
+    apply_on_the_fly();
+}
+
+void avm3d_app::action_root_snapshot_handler()
+{
+	m_root_gui->show_menu(false);
+
+	SDKCAInst()->SavePic = true;
+}
+
+bool avm3d_app::is_landscape_3d_view(int view)
+{
+	switch (view)
+	{
+	case AVM3D_VIEW_ID_3D_LANDSCAPE_FRONT:
+	case AVM3D_VIEW_ID_3D_LANDSCAPE_LEFT:
+	case AVM3D_VIEW_ID_3D_LANDSCAPE_REAR:
+	case AVM3D_VIEW_ID_3D_LANDSCAPE_RIGHT:
+	case AVM3D_VIEW_ID_3D_LANDSCAPE_FRONT_LEFT:
+	case AVM3D_VIEW_ID_3D_LANDSCAPE_FRONT_RIGHT:
+	case AVM3D_VIEW_ID_3D_LANDSCAPE_REAR_LEFT:
+	case AVM3D_VIEW_ID_3D_LANDSCAPE_REAR_RIGHT:
+		return true;
+	}
+	return false;
+}
+
+bool avm3d_app::is_portrait_3d_view(int view)
+{
+	switch (view)
+	{
+	case AVM3D_VIEW_ID_3D_PORTRAIT_FRONT_LEFT:
+	case AVM3D_VIEW_ID_3D_PORTRAIT_FRONT_RIGHT:
+	case AVM3D_VIEW_ID_3D_PORTRAIT_LEFT_LEFT:
+	case AVM3D_VIEW_ID_3D_PORTRAIT_LEFT_RIGHT:
+	case AVM3D_VIEW_ID_3D_PORTRAIT_REAR_LEFT:
+	case AVM3D_VIEW_ID_3D_PORTRAIT_REAR_RIGHT:
+	case AVM3D_VIEW_ID_3D_PORTRAIT_RIGHT_LEFT:
+	case AVM3D_VIEW_ID_3D_PORTRAIT_RIGHT_RIGHT:
+	case AVM3D_VIEW_ID_3D_PORTRAIT_FRONTLEFT_LEFT:
+	case AVM3D_VIEW_ID_3D_PORTRAIT_FRONTLEFT_RIGHT:
+	case AVM3D_VIEW_ID_3D_PORTRAIT_FRONTRIGHT_LEFT:
+	case AVM3D_VIEW_ID_3D_PORTRAIT_FRONTRIGHT_RIGHT:
+		return true;
+	}
+	return false;
+}
+
+bool avm3d_app::using_wide_raw_view()
+{
+	static bool inited = false;
+	static bool wide_raw_view = false;
+
+	if (!inited) {
+		std::string car_name = zros::car_instance::CarInstance::Instance()->GetName();
+		if (car_name.compare("byd_hcef") == 0) {
+			wide_raw_view = true;
+		}
+		inited = true;
+	}
+
+	return wide_raw_view;
+}
+
+ZM_3D_RECT avm3d_app::get_chnview_range()
+{
+    PAVM3D_CFG cfg = avm3d_cfg_get();
+    return cfg->chnview.range[m_layout];
+}
+
+
+void avm3d_app::deinit()
+{
+	if (!m_inited)
+	{
+		return;
+	}
+	m_inited = false;
+	m_first_render = false;
+
+	avm3d_setting_deinit();
+	avm3d_msg_deinit();
+	inst_deinit();
+	avm3d_cfg_deinit();
+}
+
+void avm3d_app::inst_deinit()
+{
+	delete m_car;
+	m_car = NULL;
+
+	delete m_car_shadow;
+	m_car_shadow = NULL;
+
+    delete m_obstacle_around;
+    m_obstacle_around = NULL;
+
+	delete m_topview;
+	m_topview = NULL;
+
+	delete m_chnview;
+	m_chnview = NULL;
+
+	delete m_sideview;
+	m_sideview = NULL;
+
+	delete m_root_gui;
+	m_root_gui = NULL;
+
+	delete m_topview_gui;
+	m_topview_gui = NULL;
+
+	delete m_chnview_gui;
+	m_chnview_gui = NULL;
+
+	delete m_slot;
+	m_slot = NULL;
+
+	delete m_cfg;
+	m_cfg = NULL;
+
+    delete m_obstacle_2d;
+    m_obstacle_2d = NULL;
+
+	zros_ui_app::inst_deinit();
+}
